@@ -1,0 +1,15 @@
+{
+  "type": "vae",
+  "encoder": [
+    {"type": "flatten"},
+    {"type": "fc", "dim": 600, "activation": "relu", "batch_norm": true},
+    {"type": "fc", "dim": 600, "activation": "relu", "batch_norm": true}
+  ],
+  "n_hidden": 50,
+  "decoder": [
+    {"type": "fc", "dim": 600, "activation": "relu", "batch_norm": true},
+    {"type": "fc", "dim": 600, "activation": "relu", "batch_norm": true},
+    {"type": "fc", "dim": 784, "activation": "sigmoid"}
+  ],
+  "loss": "vae_ce"
+}
