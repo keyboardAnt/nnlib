@@ -1,5 +1,4 @@
 from torch.utils.data import Subset, DataLoader
-import methods
 from collections import defaultdict
 from tqdm import tqdm
 import torch

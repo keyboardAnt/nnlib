@@ -5,14 +5,14 @@ calling the savefig(fig, path) below. The purpose of this design is to make it
 possible to use these tools in both jupyter notebooks and in ordinary scripts.
 """
 from sklearn.manifold import TSNE
-from nnlib import utils
-from nnlib.data_utils import revert_normalization
+from . import utils
+from .data_utils import revert_normalization
 import numpy as np
 import os
 import torch
 
 import matplotlib
-matplotlib.use('agg')
+matplotlib.use('agg', warn=False)
 from matplotlib import pyplot
 
 
