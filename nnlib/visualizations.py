@@ -4,10 +4,9 @@ These visualization tools will note save figures. That can be later done by
 calling the savefig(fig, path) below. The purpose of this design is to make it
 possible to use these tools in both jupyter notebooks and in ordinary scripts.
 """
-import torch.nn.functional as F
 from sklearn.manifold import TSNE
-from modules import utils
-from modules.data_utils import revert_normalization
+from nnlib import utils
+from nnlib.data_utils import revert_normalization
 import numpy as np
 import os
 import torch

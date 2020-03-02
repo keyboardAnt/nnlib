@@ -1,7 +1,7 @@
 from collections import defaultdict
 from torch.utils.tensorboard import SummaryWriter
 from torch import optim
-from modules import utils
+from nnlib import utils
 from tqdm import tqdm
 import os
 import pickle
@@ -114,7 +114,7 @@ def make_markdown_table_from_dict(params_dict):
 
 
 def train(model, train_loader, val_loader, epochs, save_iter=10, vis_iter=4,
-          optimization_args=None, log_dir=None, args_to_log=None, stopping_param=50):
+          optimization_args=None, log_dir=None, args_to_log=None, stopping_param=2**30):
     """ Trains the model. Validation loader can be none.
     Assumptions:
     1. loaders return (batch_inputs, batch_labels), where both can be lists or torch.Tensors

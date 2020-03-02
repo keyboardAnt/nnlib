@@ -95,7 +95,9 @@ def apply_on_dataset(model, dataset, batch_size=256, cpu=True, description="",
     for inputs_batch, labels_batch in tqdm(loader, desc=description):
         if isinstance(inputs_batch, torch.Tensor):
             inputs_batch = [inputs_batch]
-        outputs_batch = model.forward(inputs=inputs_batch, **kwargs)
+        if not isinstance(labels_batch, list):
+            labels_batch = [labels_batch]
+        outputs_batch = model.forward(inputs=inputs_batch, labels=labels_batch, **kwargs)
         for k, v in outputs_batch.items():
             if re.fullmatch(output_keys_regexp, k) is None:
                 continue
@@ -104,8 +106,9 @@ def apply_on_dataset(model, dataset, batch_size=256, cpu=True, description="",
             outputs[k].append(v)
 
         # add labels if requested
-        if re.fullmatch(output_keys_regexp, 'label') is not None:
-            outputs['label'].append(labels_batch)
+        if re.fullmatch(output_keys_regexp, 'labels') is not None:
+            for label_idx, label_tensor in enumerate(labels_batch):
+                outputs[f'label_{label_idx}'].append(label_tensor)
 
     for k in outputs:
         outputs[k] = torch.cat(outputs[k], dim=0)
