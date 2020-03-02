@@ -55,7 +55,7 @@ def save(model, path, optimizer=None, scheduler=None):
     torch.save(save_dict, path)
 
 
-def load(path, device=None, verbose=False, remove_load_from=False):
+def load(path, methods, device=None, verbose=False, remove_load_from=False):
     print("Loading the model from {}".format(path))
     saved_dict = torch.load(path, map_location=device)
     args = saved_dict['args']
