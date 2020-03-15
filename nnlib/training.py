@@ -1,6 +1,7 @@
 from collections import defaultdict
 from torch.utils.tensorboard import SummaryWriter
 from torch import optim
+from . import visualizations as vis
 from . import utils
 from tqdm import tqdm
 import os
@@ -68,7 +69,7 @@ def run_partition(model, epoch, tensorboard, optimizer, loader, partition, train
 
         # forward pass
         batch_losses, info = model.compute_loss(inputs=batch_data, labels=batch_labels,
-                                                grad_enabled=training)
+                                                grad_enabled=training, loader=loader)
         batch_total_loss = sum([loss for name, loss in batch_losses.items()])
 
         if training:
@@ -191,7 +192,7 @@ def train(model, train_loader, val_loader, epochs, save_iter=10, vis_iter=4,
                 with open(os.path.join(log_dir, 'best_val_result.txt'), 'w') as f:
                     f.write("{}\n".format(best_val_result))
 
-            # stop the training if the best result was not updated in the last 50 epochs
+            # stop the training if the best result was not updated in the last `stopping_param` epochs
             if epoch - last_best_epoch >= stopping_param:
                 break
 
@@ -204,3 +205,10 @@ def train(model, train_loader, val_loader, epochs, save_iter=10, vis_iter=4,
     # save the final version of the network
     utils.save(model=model, optimizer=optimizer, scheduler=scheduler,
                path=os.path.join(log_dir, 'checkpoints', 'final.mdl'))
+
+    # do final visualizations
+    if hasattr(model, 'visualize'):
+        visualizations = model.visualize(train_loader, val_loader, tensorboard=tensorboard, epoch=epochs)
+        for (name, fig) in visualizations.items():
+            tensorboard.add_figure(name, fig, epochs)
+            vis.savefig(fig, os.path.join(log_dir, name, 'final.png'))
