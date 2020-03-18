@@ -38,6 +38,11 @@ def set_requires_grad(model, value):
         p.requires_grad = value
 
 
+def zero_grad(model):
+    for param in model.parameters():
+        param.grad = torch.zeros_like(param)
+
+
 def save(model, path, optimizer=None, scheduler=None):
     print('Saving the model into {}'.format(path))
     make_path(os.path.dirname(path))
