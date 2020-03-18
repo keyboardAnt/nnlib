@@ -4,7 +4,7 @@ from torch import nn
 import torch
 
 
-def infer_shape(layers, input_shape):
+def infer_shape(layers, input_shape, key=None):
     """Given a list of layers representing a sequential model and its input_shape, infers the output shape."""
     input_shape = [x for x in input_shape]
     if input_shape[0] is None:
@@ -12,6 +12,8 @@ def infer_shape(layers, input_shape):
     x = torch.tensor(np.random.normal(size=input_shape), dtype=torch.float, device='cpu')
     for layer in layers:
         x = layer(x)
+    if key is not None:
+        x = x[key]
     output_shape = list(x.shape)
     output_shape[0] = None
     return output_shape
@@ -59,11 +61,18 @@ class Identity(nn.Module):
 def parse_feed_forward(args, input_shape):
     """Parses a sequential feed-forward neural network from json config."""
 
-    # parse known networks
+    # parse standard cases
     if isinstance(args, dict):
         if args['net'] == 'resnet34':
             from torchvision.models import resnet34
             net = resnet34()
+            output_shape = infer_shape([net], input_shape)
+            print("output.shape:", output_shape)
+            return net, output_shape
+
+        if args['net'] == 'resnet34-cifar':
+            from .misc.resnet_cifar import ResNet34
+            net = ResNet34(num_classes=args['num_classes'])
             output_shape = infer_shape([net], input_shape)
             print("output.shape:", output_shape)
             return net, output_shape
