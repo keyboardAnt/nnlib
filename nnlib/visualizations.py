@@ -6,7 +6,7 @@ possible to use these tools in both jupyter notebooks and in ordinary scripts.
 """
 from sklearn.manifold import TSNE
 from . import utils
-from .data_utils import revert_normalization
+from .data_utils.base import revert_normalization
 import numpy as np
 import os
 import torch
@@ -63,8 +63,9 @@ def manifold_plot(model, example_shape, low=-1.0, high=+1.0, n_points=20, d1=0, 
             z[d1] = z1
             z[d2] = z2
             cur_z = cur_z.reshape((1, -1))
-            x = utils.decode(model, cur_z).reshape(example_shape)
-            x = utils.to_numpy(x)
+            cur_z = utils.to_tensor(cur_z, device=model.device)
+            x = model.decoder(cur_z)
+            x = utils.to_numpy(x).reshape(example_shape)
             image[:, example_shape[1]*i: example_shape[1]*(i+1), example_shape[2]*j:example_shape[2]*(j+1)] = x
     fig, ax = plt.subplots(1, figsize=(10, 10))
     if image.shape[0] == 1:

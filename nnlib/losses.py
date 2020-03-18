@@ -25,18 +25,3 @@ def mae(target, pred):
     mad = torch.sum(torch.abs(target - pred), dim=1)
     mad = torch.mean(mad, dim=0)
     return mad
-
-
-def get_classification_loss(target, logits, loss_function='ce'):
-    """
-    :param target: one-hot encoded vector
-    :param logits: predicted logits (i.e. before softmax)
-    :param loss_function: 'ce', 'mse', 'mae', 'gce', 'dmi'
-    """
-    if loss_function == 'ce':
-        return F.cross_entropy(input=logits, target=target.argmax(dim=1))
-    if loss_function == 'mse':
-        return mse(target, torch.softmax(logits, dim=1))
-    if loss_function == 'mae':
-        return mae(target, torch.softmax(logits, dim=1))
-    raise NotImplementedError()
