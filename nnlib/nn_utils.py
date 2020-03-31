@@ -60,23 +60,6 @@ class Identity(nn.Module):
 
 def parse_feed_forward(args, input_shape):
     """Parses a sequential feed-forward neural network from json config."""
-
-    # parse standard cases
-    if isinstance(args, dict):
-        if args['net'] == 'resnet34':
-            from torchvision.models import resnet34
-            net = resnet34()
-            output_shape = infer_shape([net], input_shape)
-            print("output.shape:", output_shape)
-            return net, output_shape
-
-        if args['net'] == 'resnet34-cifar':
-            from .misc.resnet_cifar import ResNet34
-            net = ResNet34(num_classes=args['num_classes'])
-            output_shape = infer_shape([net], input_shape)
-            print("output.shape:", output_shape)
-            return net, output_shape
-
     net = []
     for cur_layer in args:
         layer_type = cur_layer['type']
@@ -139,3 +122,26 @@ def parse_feed_forward(args, input_shape):
     output_shape = infer_shape(net, input_shape)
     print("output.shape:", output_shape)
     return nn.Sequential(*net), output_shape
+
+
+def parse_network_from_config(args, input_shape):
+    """Parses neural network architectures from json config."""
+
+    # parse standard cases
+    if isinstance(args, dict):
+        if args['net'] == 'resnet34':
+            from torchvision.models import resnet34
+            net = resnet34()
+            output_shape = infer_shape([net], input_shape)
+            print("output.shape:", output_shape)
+            return net, output_shape
+
+        if args['net'] == 'resnet34-cifar':
+            from .misc.resnet_cifar import ResNet34
+            net = ResNet34(num_classes=args['num_classes'])
+            output_shape = infer_shape([net], input_shape)
+            print("output.shape:", output_shape)
+            return net, output_shape
+
+    # parse feed forward
+    return parse_feed_forward(args, input_shape)

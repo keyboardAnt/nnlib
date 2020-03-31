@@ -136,7 +136,6 @@ def train(model, train_loader, val_loader, epochs, save_iter=10, vis_iter=4,
     print("Visualize logs using: tensorboard --logdir={0}".format(log_dir))
 
     # add args_to_log to tensorboard, but also store it separately for easier access
-    tensorboard.add_text('script arguments', repr(args_to_log))
     tensorboard.add_text('script arguments table', make_markdown_table_from_dict(vars(args_to_log)))
     with open(os.path.join(log_dir, 'args.pkl'), 'wb') as f:
         pickle.dump(args_to_log, f)
