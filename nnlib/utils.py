@@ -4,6 +4,7 @@ from tqdm import tqdm
 import torch
 import os
 import re
+import inspect
 
 
 def make_path(path):
@@ -120,3 +121,35 @@ def apply_on_dataset(model, dataset, batch_size=256, cpu=True, description="",
         assert len(outputs[k]) == n_examples
 
     return outputs
+
+
+def capture_arguments_of_init(init_func):
+    def wrapper(self, *args, **kwargs):
+
+        # get the name of kwargs, usually this will be just "kwargs"
+        kwargs_name = inspect.getfullargspec(init_func).varkw
+
+        # get the signature, bind arguments, apply defaults, and convert to dictionary
+        signature = inspect.signature(init_func)
+        bind_result = signature.bind(self, *args, **kwargs)
+        bind_result.apply_defaults()
+        argument_dict = bind_result.arguments
+
+        # remove self
+        argument_dict.pop('self')
+
+        # remove kwargs and add its content to our dictionary
+        kw = argument_dict.pop(kwargs_name)
+        for k, v in kw.items():
+            argument_dict[k] = v
+
+        # call the init function
+        init_func(self, *args, **kwargs)
+
+        # add the class name
+        argument_dict['class'] = self.__class__.__name__
+
+        # write it in self
+        self.args = argument_dict
+
+    return wrapper
