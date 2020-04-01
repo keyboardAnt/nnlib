@@ -1,4 +1,6 @@
 from torch.utils.data import Dataset, DataLoader
+from .base import print_dataset_info_decorator
+
 import numpy as np
 import os
 import torch
@@ -125,6 +127,7 @@ def load_dsprites_datasets(val_ratio=0.2, test_ratio=0.2, seed=42,
     return train_dataset, val_dataset, test_dataset, None
 
 
+@print_dataset_info_decorator
 def load_dsprites_loaders(val_ratio=0.2, test_ratio=0.2, batch_size=128,
                           seed=42, classification=False, colored=False,
                           drop_last=False):
