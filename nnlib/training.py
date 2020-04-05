@@ -1,14 +1,16 @@
 from collections import defaultdict
-from torch.utils.tensorboard import SummaryWriter
-from torch import optim
-from . import visualizations as vis
-from . import utils
-from tqdm import tqdm
 import os
 import pickle
 import time
+
+from torch.utils.tensorboard import SummaryWriter
+from torch import optim
+from tqdm import tqdm
 import numpy as np
 import torch
+
+from . import visualizations as vis
+from . import utils
 
 
 def add_weight_decay(named_params, weight_decay_rate):

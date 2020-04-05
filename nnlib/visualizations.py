@@ -4,16 +4,17 @@ These visualization tools will note save figures. That can be later done by
 calling the savefig(fig, path) below. The purpose of this design is to make it
 possible to use these tools in both jupyter notebooks and in ordinary scripts.
 """
-from sklearn.manifold import TSNE
-from . import utils
-from .data_utils.base import revert_normalization
-import numpy as np
 import os
-import torch
 
+from sklearn.manifold import TSNE
+import numpy as np
+import torch
 import matplotlib
 matplotlib.use('agg', warn=False)
 from matplotlib import pyplot
+
+from . import utils
+from .data_utils.base import revert_normalization
 
 
 def get_image(x):

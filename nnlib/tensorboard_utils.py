@@ -1,6 +1,7 @@
+import os
+
 from scipy.ndimage.filters import gaussian_filter1d
 import tensorflow as tf
-import os
 
 
 def find_latest_tfevents_file(dir_path):
