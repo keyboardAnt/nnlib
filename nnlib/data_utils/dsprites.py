@@ -1,9 +1,10 @@
-from torch.utils.data import Dataset, DataLoader
-from .base import print_dataset_info_decorator
-
-import numpy as np
 import os
+
+from torch.utils.data import Dataset, DataLoader
 import torch
+import numpy as np
+
+from .base import print_dataset_info_decorator
 
 
 class DSpritesDataset(Dataset):

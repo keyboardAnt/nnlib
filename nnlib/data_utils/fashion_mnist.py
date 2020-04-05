@@ -1,7 +1,7 @@
-from .base import StandardVisionDataset
 from torchvision import transforms, datasets
-
 import torch
+
+from .abstract import StandardVisionDataset
 
 
 class FashionMNIST(StandardVisionDataset):
@@ -23,12 +23,12 @@ class FashionMNIST(StandardVisionDataset):
 
     @property
     def train_transforms(self):
-        data_augmentation_transforms = []
-        if self.data_augmentation:
-            data_augmentation_transforms = [transforms.RandomCrop(28, 4), transforms.RandomHorizontalFlip()]
-        return transforms.Compose([transforms.ToTensor()]
-                                  + data_augmentation_transforms
-                                  + [self.normalize_transform])
+        if not self.data_augmentation:
+            return self.test_transforms
+        return transforms.Compose([transforms.RandomCrop(28, 4),
+                                   transforms.RandomHorizontalFlip(),
+                                   transforms.ToTensor(),
+                                   self.normalize_transform])
 
     @property
     def test_transforms(self):

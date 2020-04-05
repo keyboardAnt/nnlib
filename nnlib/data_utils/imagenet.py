@@ -1,7 +1,7 @@
-from .base import StandardVisionDataset
 from torchvision import transforms, datasets
-
 import torch
+
+from .abstract import StandardVisionDataset
 
 
 class ImageNet(StandardVisionDataset):

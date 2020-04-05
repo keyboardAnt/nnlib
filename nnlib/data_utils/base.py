@@ -1,8 +1,4 @@
-from abc import abstractmethod, ABC
-from torch.utils.data import Subset, DataLoader
-from torchvision import transforms
-
-import os
+from torch.utils.data import DataLoader
 import numpy as np
 
 
@@ -55,119 +51,101 @@ def print_dataset_info_decorator(build_loaders):
     return wrapper
 
 
-class StandardVisionDataset(ABC):
-    """
-    Holds information about a given dataset and implements several useful functions
-    """
+def register_parser(registry, parser_name):
+    def decorator(parser_fn):
+        registry[parser_name] = parser_fn
+
+        def wrapper(*args, **kwargs):
+            return parser_fn(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
+
+
+class DataSelector:
+    """ Helper class for loading data from arguments. """
+
+    _parsers = {}  # register_parsers decorator will fill this
 
     def __init__(self):
         pass
 
-    @property
-    @abstractmethod
-    def dataset_name(self) -> str:
-        raise NotImplementedError('dataset_name not implemented')
-
-    @property
-    @abstractmethod
-    def means(self):
-        raise NotImplementedError('means not implemented')
-
-    @property
-    @abstractmethod
-    def stds(self):
-        raise NotImplementedError('stds not implemented')
-
-    @abstractmethod
-    def raw_dataset(self, data_dir: str, download: bool, train: bool, transform):
-        raise NotImplementedError('raw_dataset_class not implemented, need to return datasets')
-
-    @property
-    def normalize_transform(self):
-        return transforms.Normalize(mean=self.means, std=self.stds)
-
-    @property
-    def train_transforms(self):
-        return transforms.Compose([
-            transforms.ToTensor(),
-            self.normalize_transform
-        ])
-
-    @property
-    def test_transforms(self):
-        return self.train_transforms()
-
-    def build_datasets(self, data_dir: str = None, val_ratio: float = 0.2, num_train_examples: int = None,
-                       seed: int = 42):
-        """ Builds train, validation, and test datasets. """
-
-        if data_dir is None:
-            data_dir = os.path.join(os.environ['DATA_DIR'], self.dataset_name)
-
-        train_data = self.raw_dataset(data_dir, download=True, train=True, transform=self.train_transforms)
-        val_data = self.raw_dataset(data_dir, download=True, train=True, transform=self.train_transforms)
-        test_data = self.raw_dataset(data_dir, download=True, train=False, transform=self.test_transforms)
-
-        # split train and validation
-        train_indices, val_indices = get_split_indices(len(train_data), val_ratio, seed)
-        if num_train_examples is not None:
-            train_indices = np.random.choice(train_indices, num_train_examples, replace=False)
-        train_data = Subset(train_data, train_indices)
-        val_data = Subset(val_data, val_indices)
-
-        # name datasets and save statistics
-        for dataset in [train_data, val_data, test_data]:
-            dataset.dataset_name = self.dataset_name
-            dataset.statistics = (self.means, self.stds)
-
-        # general way of returning extra information
-        info = None
-
-        return train_data, val_data, test_data, info
-
-    @print_dataset_info_decorator
-    def build_loaders(self, data_dir: str = None, val_ratio: float = 0.2, num_train_examples: int = None,
-                      seed: int = 42, batch_size: int = 128, num_workers: int = 4, drop_last: bool = False):
-        train_data, val_data, test_data, info = self.build_datasets(data_dir=data_dir, val_ratio=val_ratio,
-                                                                    num_train_examples=num_train_examples,
-                                                                    seed=seed)
-        train_loader, val_loader, test_loader = get_loaders_from_datasets(train_data, val_data, test_data,
-                                                                          batch_size=batch_size,
-                                                                          num_workers=num_workers,
-                                                                          drop_last=drop_last)
-        return train_loader, val_loader, test_loader, info
-
-
-def load_data_from_arguments(args):
-    """ Helper method for loading data from arguments.
-    """
-    if args.dataset == 'mnist':
+    @register_parser(_parsers, 'mnist')
+    def _parse_mnist(self, args):
         from .mnist import MNIST
         return MNIST(data_augmentation=args.data_augmentation).build_loaders(
             batch_size=args.batch_size, num_train_examples=args.num_train_examples, seed=args.seed)
 
-    if args.dataset == 'fashion-mnist':
+    @register_parser(_parsers, 'uniform-noise-mnist')
+    def _parse_uniform_noise_mnist(self, args):
+        from .mnist import UniformNoiseMNIST
+        return UniformNoiseMNIST(error_prob=args.error_prob, clean_validation=args.clean_validation,
+                                 data_augmentation=args.data_augmentation).build_loaders(
+            batch_size=args.batch_size, num_train_examples=args.num_train_examples, seed=args.seed)
+
+    @register_parser(_parsers, 'fashion-mnist')
+    def _parse_fashion_mnist(self, args):
         from .fashion_mnist import FashionMNIST
         return FashionMNIST(data_augmentation=args.data_augmentation).build_loaders(
             batch_size=args.batch_size, num_train_examples=args.num_train_examples, seed=args.seed)
 
-    if args.dataset == 'cifar10':
+    @register_parser(_parsers, 'cifar10')
+    def _parse_cifar10(self, args):
         from .cifar import CIFAR
-        return CIFAR(num_classes=10, data_augmentation=args.data_augmentation).build_loaders(
+        return CIFAR(n_classes=10, data_augmentation=args.data_augmentation).build_loaders(
             batch_size=args.batch_size, num_train_examples=args.num_train_examples, seed=args.seed)
 
-    if args.dataset == 'cifar100':
-        from .cifar import CIFAR
-        return CIFAR(num_classes=100, data_augmentation=args.data_augmentation).build_loaders(
+    @register_parser(_parsers, 'uniform-noise-cifar10')
+    def _parse_uniform_noise_cifar10(self, args):
+        from .cifar import UniformNoiseCIFAR
+        return UniformNoiseCIFAR(n_classes=10, error_prob=args.error_prob, data_augmentation=args.data_augmentation,
+                                 clean_validation=args.clean_validation).build_loaders(
             batch_size=args.batch_size, num_train_examples=args.num_train_examples, seed=args.seed)
 
-    if args.dataset == 'imagenet':
+    @register_parser(_parsers, 'pair-noise-cifar10')
+    def _parse_pair_noise_cifar10(self, args):
+        from .cifar import PairNoiseCIFAR10
+        return PairNoiseCIFAR10(error_prob=args.error_prob, data_augmentation=args.data_augmentation,
+                                clean_validation=args.clean_validation).build_loaders(
+            batch_size=args.batch_size, num_train_examples=args.num_train_examples, seed=args.seed)
+
+    @register_parser(_parsers, 'cifar100')
+    def _parse_cifar100(self, args):
+        from .cifar import CIFAR
+        return CIFAR(n_classes=100, data_augmentation=args.data_augmentation).build_loaders(
+            batch_size=args.batch_size, num_train_examples=args.num_train_examples, seed=args.seed)
+
+    @register_parser(_parsers, 'uniform-noise-cifar100')
+    def _parse_uniform_noise_cifar100(self, args):
+        from .cifar import UniformNoiseCIFAR
+        return UniformNoiseCIFAR(n_classes=100, error_prob=args.error_prob, data_augmentation=args.data_augmentation,
+                                 clean_validation=args.clean_validation).build_loaders(
+            batch_size=args.batch_size, num_train_examples=args.num_train_examples, seed=args.seed)
+
+    @register_parser(_parsers, 'imagenet')
+    def _parse_imagenet(self, args):
         from .imagenet import ImageNet
         return ImageNet(data_augmentation=args.data_augmentation).build_loaders(
             batch_size=args.batch_size, num_train_examples=args.num_train_examples, seed=args.seed)
 
-    if args.dataset == 'dsprites':
+    @register_parser(_parsers, 'dsprites')
+    def _parse_dsprites(self, args):
         from .dsprites import load_dsprites_loaders
         return load_dsprites_loaders(batch_size=args.batch_size, seed=args.seed, colored=args.colored)
 
-    raise ValueError("args.dataset is not recognized")
+    @register_parser(_parsers, 'clothing1m')
+    def _parse_clothing1m(self, args):
+        from .clothing1m import Clothing1M
+        return Clothing1M(data_augmentation=args.data_augmentation).build_loaders(
+            batch_size=args.batch_size, num_train_examples=args.num_train_examples,
+            num_workers=10, seed=args.seed)
+
+    def can_parse(self, dataset_name):
+        return dataset_name in self._parsers
+
+    def parse(self, args):
+        if not self.can_parse(args.dataset):
+            raise ValueError(f"Value {args.dataset} for args.dataset is not recognized")
+        parser = self._parsers[args.dataset]
+        return parser(self, args)
