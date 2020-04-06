@@ -37,8 +37,8 @@ def add_activation(layers, activation):
 
 
 class Flatten(nn.Module):
-    def forward(self, input):
-        return input.view(input.size(0), -1)
+    def forward(self, x):
+        return x.view(x.size(0), -1)
 
 
 class Reshape(nn.Module):
@@ -137,8 +137,8 @@ def parse_network_from_config(args, input_shape):
             return net, output_shape
 
         if args['net'] == 'resnet34-cifar':
-            from .misc.resnet_cifar import ResNet34
-            net = ResNet34(num_classes=args['num_classes'])
+            from .misc.resnet_cifar import resnet34
+            net = resnet34(num_classes=args['num_classes'])
             output_shape = infer_shape([net], input_shape)
             print("output.shape:", output_shape)
             return net, output_shape

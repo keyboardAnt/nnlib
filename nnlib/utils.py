@@ -88,6 +88,7 @@ def apply_on_dataset(model, dataset, batch_size=256, cpu=True, description="",
                      output_keys_regexp='.*', max_num_examples=2**30,
                      num_workers=0, **kwargs):
     model.eval()
+
     if num_workers > 0:
         torch.multiprocessing.set_sharing_strategy('file_system')
         torch.multiprocessing.set_start_method('spawn', force=True)
@@ -124,14 +125,10 @@ def apply_on_dataset(model, dataset, batch_size=256, cpu=True, description="",
     return outputs
 
 
-def capture_arguments_of_init(init_func):
+def capture_arguments_of_init(init_fn):
     def wrapper(self, *args, **kwargs):
-
-        # get the name of kwargs, usually this will be just "kwargs"
-        kwargs_name = inspect.getfullargspec(init_func).varkw
-
         # get the signature, bind arguments, apply defaults, and convert to dictionary
-        signature = inspect.signature(init_func)
+        signature = inspect.signature(init_fn)
         bind_result = signature.bind(self, *args, **kwargs)
         bind_result.apply_defaults()
         argument_dict = bind_result.arguments
@@ -140,12 +137,15 @@ def capture_arguments_of_init(init_func):
         argument_dict.pop('self')
 
         # remove kwargs and add its content to our dictionary
-        kw = argument_dict.pop(kwargs_name)
-        for k, v in kw.items():
-            argument_dict[k] = v
+        # get the name of kwargs, usually this will be just "kwargs"
+        kwargs_name = inspect.getfullargspec(init_fn).varkw
+        if kwargs_name is not None:
+            kw = argument_dict.pop(kwargs_name)
+            for k, v in kw.items():
+                argument_dict[k] = v
 
         # call the init function
-        init_func(self, *args, **kwargs)
+        init_fn(self, *args, **kwargs)
 
         # add the class name
         argument_dict['class'] = self.__class__.__name__
