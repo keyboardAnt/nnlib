@@ -1,3 +1,6 @@
+from argparse import Namespace
+import inspect
+
 from torch.utils.data import DataLoader
 import numpy as np
 
@@ -36,18 +39,53 @@ def get_loaders_from_datasets(train_data, val_data, test_data, batch_size=128, n
     return train_loader, val_loader, test_loader
 
 
-def print_dataset_info_decorator(build_loaders):
+def print_loaded_dataset_shapes(build_datasets_fn):
     def wrapper(*args, **kwargs):
-        train_loader, val_loader, test_loader, info = build_loaders(*args, **kwargs)
-        example_shape = train_loader.dataset[0][0].shape
-        print("Dataset {} is loaded".format(train_loader.dataset.dataset_name))
-        print("\ttrain_samples: {}".format(len(train_loader.dataset)))
-        if val_loader is not None:
-            print("\tval_samples: {}".format(len(val_loader.dataset)))
-        if test_loader is not None:
-            print("\ttest_samples: {}".format(len(test_loader.dataset)))
-        print("\texample_shape: {}".format(example_shape))
-        return train_loader, val_loader, test_loader, info
+        train_data, val_data, test_data, info = build_datasets_fn(*args, **kwargs)
+        print(f"Dataset {train_data.dataset_name} is loaded")
+        print(f"\ttrain_samples: {len(train_data)}")
+        if val_data is not None:
+            print(f"\tval_samples: {len(val_data)}")
+        if test_data is not None:
+            print(f"\ttest_samples: {len(test_data)}")
+        example_shape = train_data[0][0].shape
+        print(f"\texample_shape: {example_shape}")
+        return train_data, val_data, test_data, info
+    return wrapper
+
+
+def log_call_parameters(fn):
+    """ A decorator for logging arguments of a function call. """
+    def wrapper(*args, **kwargs):
+        # get the signature, bind arguments, apply defaults, and convert to dictionary
+        signature = inspect.signature(fn)
+        bind_result = signature.bind(*args, **kwargs)
+        bind_result.apply_defaults()
+        argument_dict = bind_result.arguments
+
+        # if it has self, we can get the class name
+        class_name = None
+        if 'self' in argument_dict:
+            self = argument_dict.pop('self')
+            class_name = self.__class__.__name__
+
+        # get the name of kwargs and remove it
+        kwargs_name = inspect.getfullargspec(fn).varkw
+        if kwargs_name is not None:
+            argument_dict.pop(kwargs_name)
+
+        # log the call
+        fn_name = fn.__name__
+        if class_name is not None:
+            print(f"calling function {fn_name} of {class_name} with the following parameters:")
+        else:
+            print(f"calling function {fn_name} with the following parameters:")
+
+        for k, v in argument_dict.items():
+            print(f"\t{k}: {v}")
+
+        return fn(*args, **kwargs)
+
     return wrapper
 
 
@@ -72,80 +110,133 @@ class DataSelector:
         pass
 
     @register_parser(_parsers, 'mnist')
-    def _parse_mnist(self, args):
+    def _parse_mnist(self, args, build_loaders=True):
         from .mnist import MNIST
-        return MNIST(data_augmentation=args.data_augmentation).build_loaders(
-            batch_size=args.batch_size, num_train_examples=args.num_train_examples, seed=args.seed)
+        data_builder = MNIST(**args)
+        if build_loaders:
+            return data_builder.build_loaders(**args)
+        else:
+            return data_builder.build_datasets(**args)
 
     @register_parser(_parsers, 'uniform-noise-mnist')
-    def _parse_uniform_noise_mnist(self, args):
+    def _parse_uniform_noise_mnist(self, args, build_loaders=True):
         from .mnist import UniformNoiseMNIST
-        return UniformNoiseMNIST(error_prob=args.error_prob, clean_validation=args.clean_validation,
-                                 data_augmentation=args.data_augmentation).build_loaders(
-            batch_size=args.batch_size, num_train_examples=args.num_train_examples, seed=args.seed)
+        data_builder = UniformNoiseMNIST(**args)
+        if build_loaders:
+            return data_builder.build_loaders(**args)
+        else:
+            return data_builder.build_datasets(**args)
 
     @register_parser(_parsers, 'fashion-mnist')
-    def _parse_fashion_mnist(self, args):
+    def _parse_fashion_mnist(self, args, build_loaders=True):
         from .fashion_mnist import FashionMNIST
-        return FashionMNIST(data_augmentation=args.data_augmentation).build_loaders(
-            batch_size=args.batch_size, num_train_examples=args.num_train_examples, seed=args.seed)
+        data_builder = FashionMNIST(**args)
+        if build_loaders:
+            return data_builder.build_loaders(**args)
+        else:
+            return data_builder.build_datasets(**args)
 
     @register_parser(_parsers, 'cifar10')
-    def _parse_cifar10(self, args):
+    def _parse_cifar10(self, args, build_loaders=True):
         from .cifar import CIFAR
-        return CIFAR(n_classes=10, data_augmentation=args.data_augmentation).build_loaders(
-            batch_size=args.batch_size, num_train_examples=args.num_train_examples, seed=args.seed)
+        args['n_classes'] = 10
+        data_builder = CIFAR(**args)
+        if build_loaders:
+            return data_builder.build_loaders(**args)
+        else:
+            return data_builder.build_datasets(**args)
 
     @register_parser(_parsers, 'uniform-noise-cifar10')
-    def _parse_uniform_noise_cifar10(self, args):
+    def _parse_uniform_noise_cifar10(self, args, build_loaders=True):
         from .cifar import UniformNoiseCIFAR
-        return UniformNoiseCIFAR(n_classes=10, error_prob=args.error_prob, data_augmentation=args.data_augmentation,
-                                 clean_validation=args.clean_validation).build_loaders(
-            batch_size=args.batch_size, num_train_examples=args.num_train_examples, seed=args.seed)
+        args['n_classes'] = 10
+        data_builder = UniformNoiseCIFAR(**args)
+        if build_loaders:
+            return data_builder.build_loaders(**args)
+        else:
+            return data_builder.build_datasets(**args)
 
     @register_parser(_parsers, 'pair-noise-cifar10')
-    def _parse_pair_noise_cifar10(self, args):
+    def _parse_pair_noise_cifar10(self, args, build_loaders=True):
         from .cifar import PairNoiseCIFAR10
-        return PairNoiseCIFAR10(error_prob=args.error_prob, data_augmentation=args.data_augmentation,
-                                clean_validation=args.clean_validation).build_loaders(
-            batch_size=args.batch_size, num_train_examples=args.num_train_examples, seed=args.seed)
+        data_builder = PairNoiseCIFAR10(**args)
+        if build_loaders:
+            return data_builder.build_loaders(**args)
+        else:
+            return data_builder.build_datasets(**args)
 
     @register_parser(_parsers, 'cifar100')
-    def _parse_cifar100(self, args):
+    def _parse_cifar100(self, args, build_loaders=True):
         from .cifar import CIFAR
-        return CIFAR(n_classes=100, data_augmentation=args.data_augmentation).build_loaders(
-            batch_size=args.batch_size, num_train_examples=args.num_train_examples, seed=args.seed)
+        args['n_classes'] = 100
+        data_builder = CIFAR(**args)
+        if build_loaders:
+            return data_builder.build_loaders(**args)
+        else:
+            return data_builder.build_datasets(**args)
 
     @register_parser(_parsers, 'uniform-noise-cifar100')
-    def _parse_uniform_noise_cifar100(self, args):
+    def _parse_uniform_noise_cifar100(self, args, build_loaders=True):
         from .cifar import UniformNoiseCIFAR
-        return UniformNoiseCIFAR(n_classes=100, error_prob=args.error_prob, data_augmentation=args.data_augmentation,
-                                 clean_validation=args.clean_validation).build_loaders(
-            batch_size=args.batch_size, num_train_examples=args.num_train_examples, seed=args.seed)
+        args['n_classes'] = 100
+        data_builder = UniformNoiseCIFAR(**args)
+        if build_loaders:
+            return data_builder.build_loaders(**args)
+        else:
+            return data_builder.build_datasets(**args)
 
     @register_parser(_parsers, 'imagenet')
-    def _parse_imagenet(self, args):
+    def _parse_imagenet(self, args, build_loaders=True):
         from .imagenet import ImageNet
-        return ImageNet(data_augmentation=args.data_augmentation).build_loaders(
-            batch_size=args.batch_size, num_train_examples=args.num_train_examples, seed=args.seed)
+        if 'num_workers' not in args:
+            args['num_workers'] = 10
+        data_builder = ImageNet(**args)
+        if build_loaders:
+            return data_builder.build_loaders(**args)
+        else:
+            return data_builder.build_datasets(**args)
 
     @register_parser(_parsers, 'dsprites')
-    def _parse_dsprites(self, args):
-        from .dsprites import load_dsprites_loaders
-        return load_dsprites_loaders(batch_size=args.batch_size, seed=args.seed, colored=args.colored)
+    def _parse_dsprites(self, args, build_loaders=True):
+        from .dsprites import load_dsprites_loaders, load_dsprites_datasets
+        if build_loaders:
+            return load_dsprites_loaders(**args)
+        else:
+            return load_dsprites_datasets(**args)
 
     @register_parser(_parsers, 'clothing1m')
-    def _parse_clothing1m(self, args):
+    def _parse_clothing1m(self, args, build_loaders=True):
         from .clothing1m import Clothing1M
-        return Clothing1M(data_augmentation=args.data_augmentation).build_loaders(
-            batch_size=args.batch_size, num_train_examples=args.num_train_examples,
-            num_workers=10, seed=args.seed)
+        if 'num_workers' not in args:
+            args['num_workers'] = 10
+        data_builder = Clothing1M(**args)
+        if build_loaders:
+            return data_builder.build_loaders(**args)
+        else:
+            return data_builder.build_datasets(**args)
 
     def can_parse(self, dataset_name):
         return dataset_name in self._parsers
 
-    def parse(self, args):
-        if not self.can_parse(args.dataset):
-            raise ValueError(f"Value {args.dataset} for args.dataset is not recognized")
-        parser = self._parsers[args.dataset]
-        return parser(self, args)
+    def parse(self, args, build_loaders=True):
+        """ Loads a dataset from a Namespace or dict. """
+        if isinstance(args, Namespace):
+            args = vars(args)
+        elif isinstance(args, dict):
+            args = args.copy()
+        else:
+            raise ValueError(f"Type of args: {type(args)} is not supported")
+
+        if 'dataset' not in args:
+            raise ValueError('Variable "dataset" is missing')
+
+        dataset = args['dataset']
+        if not self.can_parse(dataset):
+            raise ValueError(f"Value {dataset} for dataset is not recognized")
+
+        parser = self._parsers[dataset]
+        return parser(self, args, build_loaders=build_loaders)
+
+
+def load_data_from_arguments(args, build_loaders=True):
+    return DataSelector().parse(args, build_loaders=build_loaders)

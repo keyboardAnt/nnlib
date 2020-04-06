@@ -1,12 +1,14 @@
 from torchvision import transforms, datasets
 import torch
 
+from .base import log_call_parameters
 from .abstract import StandardVisionDataset
 
 
 class ImageNet(StandardVisionDataset):
-    def __init__(self, data_augmentation: bool = False):
-        super(ImageNet, self).__init__()
+    @log_call_parameters
+    def __init__(self, data_augmentation: bool = False, **kwargs):
+        super(ImageNet, self).__init__(**kwargs)
         self.data_augmentation = data_augmentation
 
     @property

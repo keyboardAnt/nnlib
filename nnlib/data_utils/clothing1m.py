@@ -6,6 +6,7 @@ from torch.utils.data import Subset, Dataset
 import numpy as np
 import torch
 
+from .base import log_call_parameters, print_loaded_dataset_shapes
 from .abstract import StandardVisionDataset
 
 
@@ -44,8 +45,9 @@ class Clothing1MRaw(Dataset):
 
 
 class Clothing1M(StandardVisionDataset):
-    def __init__(self, data_augmentation: bool = False):
-        super(Clothing1M, self).__init__()
+    @log_call_parameters
+    def __init__(self, data_augmentation: bool = False, **kwargs):
+        super(Clothing1M, self).__init__(**kwargs)
         self.data_augmentation = data_augmentation
 
     @property
@@ -84,10 +86,14 @@ class Clothing1M(StandardVisionDataset):
     def raw_dataset(self, data_dir: str, download: bool, train: bool, transform):
         pass
 
+    @print_loaded_dataset_shapes
+    @log_call_parameters
     def build_datasets(self, data_dir: str = None, val_ratio: float = 0.2, num_train_examples: int = None,
-                       seed: int = 42):
+                       seed: int = 42, **kwargs):
         """ Builds train, validation, and test datasets. """
         print(f"val_ratio is ignored as {self.dataset_name} does not require splitting")
+        print(f"Building datasets of {self.dataset_name} with data_dir={data_dir}, "
+              f"num_train_examples={num_train_examples}, seed={seed}")
 
         if data_dir is None:
             data_dir = os.path.join(os.environ['DATA_DIR'], self.dataset_name)

@@ -1,7 +1,7 @@
 from abc import abstractmethod, ABC
 from torch.utils.data import Subset
 from torchvision import transforms
-from .base import get_split_indices, print_dataset_info_decorator, get_loaders_from_datasets
+from .base import get_split_indices, print_loaded_dataset_shapes, get_loaders_from_datasets, log_call_parameters
 
 import os
 import numpy as np
@@ -53,10 +53,11 @@ class StandardVisionDataset(ABC):
         """ This can be used to modify the labels or images. """
         return train_data, val_data, test_data, info
 
+    @print_loaded_dataset_shapes
+    @log_call_parameters
     def build_datasets(self, data_dir: str = None, val_ratio: float = 0.2, num_train_examples: int = None,
-                       seed: int = 42):
+                       seed: int = 42, **kwargs):
         """ Builds train, validation, and test datasets. """
-
         if data_dir is None:
             data_dir = os.path.join(os.environ['DATA_DIR'], self.dataset_name)
 
@@ -84,12 +85,12 @@ class StandardVisionDataset(ABC):
 
         return train_data, val_data, test_data, info
 
-    @print_dataset_info_decorator
+    @log_call_parameters
     def build_loaders(self, data_dir: str = None, val_ratio: float = 0.2, num_train_examples: int = None,
-                      seed: int = 42, batch_size: int = 128, num_workers: int = 4, drop_last: bool = False):
+                      seed: int = 42, batch_size: int = 128, num_workers: int = 4, drop_last: bool = False, **kwargs):
         train_data, val_data, test_data, info = self.build_datasets(data_dir=data_dir, val_ratio=val_ratio,
                                                                     num_train_examples=num_train_examples,
-                                                                    seed=seed)
+                                                                    seed=seed, **kwargs)
         train_loader, val_loader, test_loader = get_loaders_from_datasets(train_data, val_data, test_data,
                                                                           batch_size=batch_size,
                                                                           num_workers=num_workers,

@@ -4,13 +4,15 @@ from torchvision import transforms, datasets
 import torch
 import numpy as np
 
+from .base import log_call_parameters
 from .abstract import StandardVisionDataset
 from .noise_tools import get_uniform_error_corruption_fn, get_corruption_function_from_confusion_matrix
 
 
 class CIFAR(StandardVisionDataset):
-    def __init__(self, n_classes: int = 10, data_augmentation: bool = False):
-        super(CIFAR, self).__init__()
+    @log_call_parameters
+    def __init__(self, n_classes: int = 10, data_augmentation: bool = False, **kwargs):
+        super(CIFAR, self).__init__(**kwargs)
         assert n_classes in [10, 100]
         self.n_classes = n_classes
         self.data_augmentation = data_augmentation
@@ -71,8 +73,8 @@ def cifar10_custom_confusion_matrix(n_classes, error_prob):
 
 
 class NoisyCIFAR(CIFAR):
-    def __init__(self, n_classes: int = 10, data_augmentation: bool = False, clean_validation: bool = False):
-        super(NoisyCIFAR, self).__init__(n_classes=n_classes, data_augmentation=data_augmentation)
+    def __init__(self, n_classes: int = 10, data_augmentation: bool = False, clean_validation: bool = False, **kwargs):
+        super(NoisyCIFAR, self).__init__(n_classes=n_classes, data_augmentation=data_augmentation, **kwargs)
         self.clean_validation = clean_validation
 
     @abstractmethod
@@ -87,11 +89,13 @@ class NoisyCIFAR(CIFAR):
 
 
 class UniformNoiseCIFAR(NoisyCIFAR):
+    @log_call_parameters
     def __init__(self, error_prob: float, n_classes: int = 10, data_augmentation: bool = False,
-                 clean_validation: bool = False):
+                 clean_validation: bool = False, **kwargs):
         super(UniformNoiseCIFAR, self).__init__(n_classes=n_classes,
                                                 data_augmentation=data_augmentation,
-                                                clean_validation=clean_validation)
+                                                clean_validation=clean_validation,
+                                                **kwargs)
         self._corruption_fn = get_uniform_error_corruption_fn(error_prob=error_prob, n_classes=self.n_classes)
 
     def corruption_fn(self, dataset):
@@ -99,10 +103,12 @@ class UniformNoiseCIFAR(NoisyCIFAR):
 
 
 class PairNoiseCIFAR10(NoisyCIFAR):
-    def __init__(self, error_prob: float, data_augmentation: bool = False, clean_validation: bool = False):
+    @log_call_parameters
+    def __init__(self, error_prob: float, data_augmentation: bool = False, clean_validation: bool = False, **kwargs):
         super(PairNoiseCIFAR10, self).__init__(n_classes=10,
                                                data_augmentation=data_augmentation,
-                                               clean_validation=clean_validation)
+                                               clean_validation=clean_validation,
+                                               **kwargs)
         cf = cifar10_custom_confusion_matrix(n_classes=10, error_prob=error_prob)
         self._corruption_fn = get_corruption_function_from_confusion_matrix(cf)
 

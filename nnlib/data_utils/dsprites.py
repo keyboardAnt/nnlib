@@ -4,7 +4,7 @@ from torch.utils.data import Dataset, DataLoader
 import torch
 import numpy as np
 
-from .base import print_dataset_info_decorator
+from .base import print_loaded_dataset_shapes, log_call_parameters
 
 
 class DSpritesDataset(Dataset):
@@ -103,8 +103,10 @@ class DSpritesDataset(Dataset):
         return sample, factors
 
 
+@print_loaded_dataset_shapes
+@log_call_parameters
 def load_dsprites_datasets(val_ratio=0.2, test_ratio=0.2, seed=42,
-                           classification=False, colored=False, data_file=None):
+                           classification=False, colored=False, data_file=None, **kwargs):
     N = 737280
     if colored:
         N *= 7
@@ -128,14 +130,14 @@ def load_dsprites_datasets(val_ratio=0.2, test_ratio=0.2, seed=42,
     return train_dataset, val_dataset, test_dataset, None
 
 
-@print_dataset_info_decorator
+@log_call_parameters
 def load_dsprites_loaders(val_ratio=0.2, test_ratio=0.2, batch_size=128,
                           seed=42, classification=False, colored=False,
-                          drop_last=False):
+                          drop_last=False, **kwargs):
 
     train_dataset, val_dataset, test_dataset, info = load_dsprites_datasets(
         val_ratio=val_ratio, test_ratio=test_ratio, seed=seed,
-        classification=classification, colored=colored)
+        classification=classification, colored=colored, **kwargs)
 
     train_loader = None
     val_loader = None
