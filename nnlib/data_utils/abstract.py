@@ -56,14 +56,14 @@ class StandardVisionDataset(ABC):
     @print_loaded_dataset_shapes
     @log_call_parameters
     def build_datasets(self, data_dir: str = None, val_ratio: float = 0.2, num_train_examples: int = None,
-                       seed: int = 42, **kwargs):
+                       seed: int = 42, download: bool = True, **kwargs):
         """ Builds train, validation, and test datasets. """
         if data_dir is None:
             data_dir = os.path.join(os.environ['DATA_DIR'], self.dataset_name)
 
-        train_data = self.raw_dataset(data_dir, download=True, train=True, transform=self.train_transforms)
-        val_data = self.raw_dataset(data_dir, download=True, train=True, transform=self.train_transforms)
-        test_data = self.raw_dataset(data_dir, download=True, train=False, transform=self.test_transforms)
+        train_data = self.raw_dataset(data_dir, download=download, train=True, transform=self.train_transforms)
+        val_data = self.raw_dataset(data_dir, download=download, train=True, transform=self.train_transforms)
+        test_data = self.raw_dataset(data_dir, download=download, train=False, transform=self.test_transforms)
 
         # split train and validation
         train_indices, val_indices = get_split_indices(len(train_data), val_ratio, seed)
@@ -87,10 +87,11 @@ class StandardVisionDataset(ABC):
 
     @log_call_parameters
     def build_loaders(self, data_dir: str = None, val_ratio: float = 0.2, num_train_examples: int = None,
-                      seed: int = 42, batch_size: int = 128, num_workers: int = 4, drop_last: bool = False, **kwargs):
+                      seed: int = 42, download: bool = True, batch_size: int = 128, num_workers: int = 4,
+                      drop_last: bool = False, **kwargs):
         train_data, val_data, test_data, info = self.build_datasets(data_dir=data_dir, val_ratio=val_ratio,
                                                                     num_train_examples=num_train_examples,
-                                                                    seed=seed, **kwargs)
+                                                                    seed=seed, download=download, **kwargs)
         train_loader, val_loader, test_loader = get_loaders_from_datasets(train_data, val_data, test_data,
                                                                           batch_size=batch_size,
                                                                           num_workers=num_workers,

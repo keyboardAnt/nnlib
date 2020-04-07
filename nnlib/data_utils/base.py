@@ -190,6 +190,8 @@ class DataSelector:
         from .imagenet import ImageNet
         if 'num_workers' not in args:
             args['num_workers'] = 10
+        if 'download' not in args:
+            args['download'] = False  # ImageNet cannot be downloaded automatically
         data_builder = ImageNet(**args)
         if build_loaders:
             return data_builder.build_loaders(**args)
@@ -221,7 +223,7 @@ class DataSelector:
     def parse(self, args, build_loaders=True):
         """ Loads a dataset from a Namespace or dict. """
         if isinstance(args, Namespace):
-            args = vars(args)
+            args = vars(args).copy()
         elif isinstance(args, dict):
             args = args.copy()
         else:

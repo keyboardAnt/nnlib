@@ -45,4 +45,5 @@ class ImageNet(StandardVisionDataset):
         ])
 
     def raw_dataset(self, data_dir: str, download: bool, train: bool, transform):
-        return datasets.ImageNet(data_dir, download=download, train=train, transform=transform)
+        split = ("train" if train else "val")
+        return datasets.ImageNet(data_dir, download=download, split=split, transform=transform)
