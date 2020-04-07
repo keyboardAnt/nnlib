@@ -71,7 +71,7 @@ def run_partition(model, epoch, tensorboard, optimizer, loader, partition, train
 
         # forward pass
         batch_losses, info = model.compute_loss(inputs=batch_data, labels=batch_labels,
-                                                grad_enabled=training, loader=loader)
+                                                grad_enabled=training, loader=loader, dataset=loader.dataset)
         batch_total_loss = sum([loss for name, loss in batch_losses.items()])
 
         if training:
