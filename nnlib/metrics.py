@@ -15,6 +15,10 @@ class Metric(ABC):
     def name(self) -> str:
         raise NotImplementedError("name is not implemented")
 
+    @abstractmethod
+    def value(self, *args, **kwargs):
+        raise NotImplementedError("value is not implemented")
+
     def on_epoch_start(self, *args, **kwargs):
         pass
 
@@ -31,23 +35,28 @@ class Accuracy(Metric):
         self.output_key = output_key
 
         # initialize and use later
-        self._accuracy = defaultdict(list)
+        self._accuracy_storage = defaultdict(list)
+        self._accuracy = defaultdict(dict)
 
     @property
     def name(self):
         return "accuracy"
 
+    def value(self, epoch, partition, **kwargs):
+        return self._accuracy[partition].get(epoch, None)
+
     def on_epoch_start(self, partition, **kwargs):
-        self._accuracy[partition] = []
+        self._accuracy_storage[partition] = []
 
     def on_epoch_end(self, partition, tensorboard, epoch, **kwargs):
-        accuracy = np.mean(self._accuracy[partition])
+        accuracy = np.mean(self._accuracy_storage[partition])
+        self._accuracy[partition][epoch] = accuracy
         tensorboard.add_scalar(f"metrics/{partition}_{self.name}", accuracy, epoch)
 
     def on_iteration_end(self, info, batch_labels, partition, **kwargs):
         pred = utils.to_numpy(info[self.output_key]).argmax(axis=1).astype(np.int)
         batch_labels = utils.to_numpy(batch_labels[0]).astype(np.int)
-        self._accuracy[partition].append((pred == batch_labels).astype(np.float).mean())
+        self._accuracy_storage[partition].append((pred == batch_labels).astype(np.float).mean())
 
 
 class TopKAccuracy(Metric):
@@ -57,17 +66,22 @@ class TopKAccuracy(Metric):
         self.output_key = output_key
 
         # initialize and use later
-        self._accuracy = defaultdict(list)
+        self._accuracy_storage = defaultdict(list)
+        self._accuracy = defaultdict(dict)
 
     @property
     def name(self):
         return f"top{self.k}_accuracy"
 
+    def value(self, partition, epoch, **kwargs):
+        return self._accuracy[partition].get(epoch, None)
+
     def on_epoch_start(self, partition, **kwargs):
-        self._accuracy[partition] = []
+        self._accuracy_storage[partition] = []
 
     def on_epoch_end(self, partition, tensorboard, epoch, **kwargs):
-        accuracy = np.mean(self._accuracy[partition])
+        accuracy = np.mean(self._accuracy_storage[partition])
+        self._accuracy[partition][epoch] = accuracy
         tensorboard.add_scalar(f"metrics/{partition}_{self.name}", accuracy, epoch)
 
     def on_iteration_end(self, info, batch_labels, partition, **kwargs):
@@ -78,4 +92,4 @@ class TopKAccuracy(Metric):
         batch_labels = batch_labels.reshape((-1, 1)).repeat(self.k, axis=1)
         topk_correctness = (np.sum(topk_predictions == batch_labels, axis=1) >= 1)
 
-        self._accuracy[partition].append(topk_correctness.astype(np.float).mean())
+        self._accuracy_storage[partition].append(topk_correctness.astype(np.float).mean())
