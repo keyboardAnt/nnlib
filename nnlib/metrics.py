@@ -53,8 +53,8 @@ class Accuracy(Metric):
         self._accuracy[partition][epoch] = accuracy
         tensorboard.add_scalar(f"metrics/{partition}_{self.name}", accuracy, epoch)
 
-    def on_iteration_end(self, info, batch_labels, partition, **kwargs):
-        pred = utils.to_numpy(info[self.output_key]).argmax(axis=1).astype(np.int)
+    def on_iteration_end(self, outputs, batch_labels, partition, **kwargs):
+        pred = utils.to_numpy(outputs[self.output_key]).argmax(axis=1).astype(np.int)
         batch_labels = utils.to_numpy(batch_labels[0]).astype(np.int)
         self._accuracy_storage[partition].append((pred == batch_labels).astype(np.float).mean())
 
@@ -84,8 +84,8 @@ class TopKAccuracy(Metric):
         self._accuracy[partition][epoch] = accuracy
         tensorboard.add_scalar(f"metrics/{partition}_{self.name}", accuracy, epoch)
 
-    def on_iteration_end(self, info, batch_labels, partition, **kwargs):
-        pred = utils.to_numpy(info[self.output_key])
+    def on_iteration_end(self, outputs, batch_labels, partition, **kwargs):
+        pred = utils.to_numpy(outputs[self.output_key])
         batch_labels = utils.to_numpy(batch_labels[0]).astype(np.int)
 
         topk_predictions = np.argsort(-pred, axis=1)[:, :self.k]

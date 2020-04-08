@@ -73,8 +73,10 @@ def run_partition(model, epoch, tensorboard, optimizer, loader, partition, train
             optimizer.zero_grad()
 
         # forward pass
-        batch_losses, info = model.compute_loss(inputs=batch_data, labels=batch_labels,
-                                                grad_enabled=training, loader=loader, dataset=loader.dataset)
+        outputs = model.forward(inputs=batch_data, labels=batch_labels,
+                                grad_enabled=training, loader=loader, dataset=loader.dataset)
+        batch_losses, outputs = model.compute_loss(inputs=batch_data, labels=batch_labels, outputs=outputs,
+                                                   grad_enabled=training, loader=loader, dataset=loader.dataset)
         batch_total_loss = sum([loss for name, loss in batch_losses.items()])
 
         if training:
@@ -90,10 +92,10 @@ def run_partition(model, epoch, tensorboard, optimizer, loader, partition, train
 
         # call on_iteration_end callbacks
         if hasattr(model, 'on_iteration_end'):
-            model.on_iteration_end(info=info, batch_losses=batch_losses, batch_labels=batch_labels,
+            model.on_iteration_end(outputs=outputs, batch_losses=batch_losses, batch_labels=batch_labels,
                                    partition=partition, tensorboard=tensorboard)
         for metric in metrics:
-            metric.on_iteration_end(info=info, batch_labels=batch_labels, partition=partition)
+            metric.on_iteration_end(outputs=outputs, batch_labels=batch_labels, partition=partition)
 
         # collect all losses
         if len(batch_losses) > 1:
