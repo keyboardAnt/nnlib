@@ -124,8 +124,8 @@ def make_markdown_table_from_dict(params_dict):
 
 
 def train(model, train_loader, val_loader, epochs, save_iter=10, vis_iter=4,
-          optimization_args=None, log_dir=None, args_to_log=None, stopping_param=2**30,
-          metrics=None):
+          optimization_args=None, log_dir=None, args_to_log=None, metrics=None,
+          callbacks=None, stopper=None):
     """ Trains the model. Validation loader can be none.
     Assumptions:
     1. loaders return (batch_inputs, batch_labels), where both can be lists or torch.Tensors
@@ -157,6 +157,11 @@ def train(model, train_loader, val_loader, epochs, save_iter=10, vis_iter=4,
     if metrics is None:
         metrics = []
     assert isinstance(metrics, (list, tuple))
+
+    # convert callbacks to list
+    if callbacks is None:
+        callbacks = []
+    assert isinstance(callbacks, (list, tuple))
 
     last_best_epoch = 0  # this is used to shut down training if its performance is degraded
     for epoch in range(epochs):
@@ -193,22 +198,14 @@ def train(model, train_loader, val_loader, epochs, save_iter=10, vis_iter=4,
             utils.save(model=model, optimizer=optimizer, scheduler=scheduler,
                        path=os.path.join(log_dir, 'checkpoints', 'epoch{}.mdl'.format(epoch)))
 
-        # save the model if it gives the best validation score and stop the training if needed
-        if hasattr(model, 'is_best_val_result'):
-            is_best_val, best_val_result = model.is_best_val_result()
-            if is_best_val:
-                last_best_epoch = epoch
-                print("This is the best validation result so far. Saving the model ...")
-                utils.save(model=model, optimizer=optimizer, scheduler=scheduler,
-                           path=os.path.join(log_dir, 'checkpoints', 'best_val.mdl'))
+        # Call callbacks. These can be used to save the best model so far or initiate testing.
+        for callback in callbacks:
+            callback.call(epoch=epoch, model=model, optimizer=optimizer, scheduler=scheduler, log_dir=log_dir)
 
-                # save the validation result for doing model selection later
-                with open(os.path.join(log_dir, 'best_val_result.txt'), 'w') as f:
-                    f.write("{}\n".format(best_val_result))
-
-            # stop the training if the best result was not updated in the last `stopping_param` epochs
-            if epoch - last_best_epoch >= stopping_param:
-                break
+        # check whether the training should be ended
+        if (stopper is not None) and stopper.call(epoch=epoch):
+            print(f"Finishing the training at epoch {epoch}...")
+            break
 
         # update the learning rate
         scheduler.step()
