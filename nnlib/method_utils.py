@@ -27,3 +27,7 @@ class Method(torch.nn.Module):
 
     def visualize(self, *args, **kwargs):
         return {}
+
+    @property
+    def device(self):
+        return next(self.parameters()).device
