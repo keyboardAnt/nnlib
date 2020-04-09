@@ -51,7 +51,8 @@ def build_scheduler(optimizer, optimization_args):
     return optim.lr_scheduler.StepLR(optimizer, step_size=step_size, gamma=gamma)
 
 
-def run_partition(model, epoch, tensorboard, optimizer, loader, partition, training, metrics):
+def run_partition(model, epoch, tensorboard, optimizer, loader, partition, training, metrics,
+                  data_parallel_model=None):
     # call on_epoch_start callbacks
     if hasattr(model, 'on_epoch_start'):
         model.on_epoch_start(epoch=epoch, tensorboard=tensorboard, partition=partition, loader=loader)
@@ -73,8 +74,11 @@ def run_partition(model, epoch, tensorboard, optimizer, loader, partition, train
             optimizer.zero_grad()
 
         # forward pass
-        outputs = model.forward(inputs=batch_data, labels=batch_labels,
-                                grad_enabled=training, loader=loader, dataset=loader.dataset)
+        forward_model = (model if data_parallel_model is None else data_parallel_model)
+        torch.set_grad_enabled(training)  # torch.nn.DataParallel uses this when creating copies of model
+        outputs = forward_model.forward(inputs=batch_data, labels=batch_labels,
+                                        grad_enabled=training, loader=loader, dataset=loader.dataset)
+
         batch_losses, outputs = model.compute_loss(inputs=batch_data, labels=batch_labels, outputs=outputs,
                                                    grad_enabled=training, loader=loader, dataset=loader.dataset)
         batch_total_loss = sum([loss for name, loss in batch_losses.items()])
@@ -84,6 +88,7 @@ def run_partition(model, epoch, tensorboard, optimizer, loader, partition, train
             batch_total_loss.backward()
 
             # some models might need to do something before applying gradients (e.g. clipping or adding noise)
+            # TODO: if data parallelism is on, each model should call its before_weight_update
             if hasattr(model, 'before_weight_update'):
                 model.before_weight_update()
 
@@ -127,14 +132,23 @@ def make_markdown_table_from_dict(params_dict):
 
 def train(model, train_loader, val_loader, epochs, save_iter=10, vis_iter=4,
           optimization_args=None, log_dir=None, args_to_log=None, metrics=None,
-          callbacks=None, stopper=None):
-    """ Trains the model. Validation loader can be none.
+          callbacks=None, stopper=None, device_ids=None):
+    """ Trains the model. Validation loader can be None.
     Assumptions:
     1. loaders return (batch_inputs, batch_labels), where both can be lists or torch.Tensors
+    2. models are inheriting from method_utils.Method.
+    3. callback and metrics are inheriting from their abstract classes described in callbacks.py and metrics.py
     """
 
     # print the architecture of the model, helps to notice mistakes
     print(model)
+
+    # if there are at least two devices, we use distributed data training using torch.nn.DataParallel
+    # note that PyTorch requires and we rely on the fact that the first device should match with model.device
+    data_parallel_model = None
+    if (device_ids is not None) and len(device_ids) >= 2:
+        print(f"Using multiple GPUs: {device_ids}")
+        data_parallel_model = torch.nn.DataParallel(model, device_ids=device_ids)
 
     # if log_dir is not given, logging will be done a new directory in 'logs/' directory
     if log_dir is None:
@@ -165,19 +179,24 @@ def train(model, train_loader, val_loader, epochs, save_iter=10, vis_iter=4,
         callbacks = []
     assert isinstance(callbacks, (list, tuple))
 
-    last_best_epoch = 0  # this is used to shut down training if its performance is degraded
     for epoch in range(epochs):
         t0 = time.time()
 
         model.train()
+        if data_parallel_model is not None:
+            data_parallel_model.train()
         train_losses = run_partition(model=model, epoch=epoch, tensorboard=tensorboard, optimizer=optimizer,
-                                     loader=train_loader, partition='train', training=True, metrics=metrics)
+                                     loader=train_loader, partition='train', training=True, metrics=metrics,
+                                     data_parallel_model=data_parallel_model)
 
         val_losses = {}
         if val_loader is not None:
             model.eval()
+            if data_parallel_model is not None:
+                data_parallel_model.eval()
             val_losses = run_partition(model=model, epoch=epoch, tensorboard=tensorboard, optimizer=optimizer,
-                                       loader=val_loader, partition='val', training=False, metrics=metrics)
+                                       loader=val_loader, partition='val', training=False, metrics=metrics,
+                                       data_parallel_model=data_parallel_model)
 
         # log some statistics
         t = time.time()
