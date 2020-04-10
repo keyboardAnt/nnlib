@@ -25,6 +25,13 @@ def get_image(x):
     return x
 
 
+def savefig(fig, path):
+    dir_name = os.path.dirname(path)
+    if dir_name != '':
+        utils.make_path(dir_name)
+    fig.savefig(path)
+
+
 def reconstruction_plot(model, train_data, val_data, n_samples=5, plt=None):
     """Plots reconstruction examples for training & validation sets."""
     model.eval()
@@ -208,8 +215,3 @@ def plot_predictions(model, data_loader, key, plt=None, n_examples=10):
     return fig, plt
 
 
-def savefig(fig, path):
-    dir_name = os.path.dirname(path)
-    if dir_name != '':
-        utils.make_path(dir_name)
-    fig.savefig(path)
