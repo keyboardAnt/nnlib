@@ -68,7 +68,7 @@ class Clothing1M(StandardVisionDataset):
             return self.test_transforms
 
         return transforms.Compose([
-            transforms.Resize(256, 256),
+            transforms.Resize((256, 256)),
             transforms.RandomCrop(224),
             transforms.RandomHorizontalFlip(),
             transforms.ToTensor(),
@@ -78,7 +78,7 @@ class Clothing1M(StandardVisionDataset):
     @property
     def test_transforms(self):
         return transforms.Compose([
-            transforms.Resize(224, 224),
+            transforms.Resize((224, 224)),
             transforms.ToTensor(),
             self.normalize_transform,
         ])
@@ -102,6 +102,7 @@ class Clothing1M(StandardVisionDataset):
         val_data = Clothing1MRaw(root=data_dir, validation=True, img_transform=self.test_transforms)
         test_data = Clothing1MRaw(root=data_dir, test=True, img_transform=self.test_transforms)
 
+        np.random.seed(seed)
         if num_train_examples is not None:
             subset = np.random.choice(len(train_data), num_train_examples, replace=False)
             train_data = Subset(train_data, subset)
