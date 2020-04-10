@@ -137,7 +137,7 @@ def parse_network_from_config(args, input_shape):
             return net, output_shape
 
         if args['net'] == 'resnet34-cifar':
-            from .misc.resnet_cifar import resnet34
+            from .networks.resnet_cifar import resnet34
             net = resnet34(num_classes=args['num_classes'])
             output_shape = infer_shape([net], input_shape)
             print("output.shape:", output_shape)
