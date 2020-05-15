@@ -51,11 +51,13 @@ def print_loaded_dataset_shapes(build_datasets_fn):
         example_shape = train_data[0][0].shape
         print(f"\texample_shape: {example_shape}")
         return train_data, val_data, test_data, info
+
     return wrapper
 
 
 def log_call_parameters(fn):
     """ A decorator for logging arguments of a function call. """
+
     def wrapper(*args, **kwargs):
         # get the signature, bind arguments, apply defaults, and convert to dictionary
         signature = inspect.signature(fn)
@@ -212,6 +214,24 @@ class DataSelector:
         if 'num_workers' not in args:
             args['num_workers'] = 10
         data_builder = Clothing1M(**args)
+        if build_loaders:
+            return data_builder.build_loaders(**args)
+        else:
+            return data_builder.build_datasets(**args)
+
+    @register_parser(_parsers, 'cars')
+    def _parse_cars(self, args, build_loaders=True):
+        from .cars import Cars
+        data_builder = Cars(**args)
+        if build_loaders:
+            return data_builder.build_loaders(**args)
+        else:
+            return data_builder.build_datasets(**args)
+
+    @register_parser(_parsers, 'birds')
+    def _parse_birds(self, args, build_loaders=True):
+        from .birds import Birds
+        data_builder = Birds(**args)
         if build_loaders:
             return data_builder.build_loaders(**args)
         else:
