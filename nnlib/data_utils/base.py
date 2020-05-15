@@ -217,6 +217,24 @@ class DataSelector:
         else:
             return data_builder.build_datasets(**args)
 
+    @register_parser(_parsers, 'cars')
+    def _parse_cars(self, args, build_loaders=True):
+        from .cars import Cars
+        data_builder = Cars(**args)
+        if build_loaders:
+            return data_builder.build_loaders(**args)
+        else:
+            return data_builder.build_datasets(**args)
+
+    @register_parser(_parsers, 'birds')
+    def _parse_birds(self, args, build_loaders=True):
+        from .birds import Birds
+        data_builder = Birds(**args)
+        if build_loaders:
+            return data_builder.build_loaders(**args)
+        else:
+            return data_builder.build_datasets(**args)
+
     def can_parse(self, dataset_name):
         return dataset_name in self._parsers
 
