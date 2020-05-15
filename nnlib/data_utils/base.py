@@ -51,13 +51,11 @@ def print_loaded_dataset_shapes(build_datasets_fn):
         example_shape = train_data[0][0].shape
         print(f"\texample_shape: {example_shape}")
         return train_data, val_data, test_data, info
-
     return wrapper
 
 
 def log_call_parameters(fn):
     """ A decorator for logging arguments of a function call. """
-
     def wrapper(*args, **kwargs):
         # get the signature, bind arguments, apply defaults, and convert to dictionary
         signature = inspect.signature(fn)
