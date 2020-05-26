@@ -39,6 +39,13 @@ def get_loaders_from_datasets(train_data, val_data, test_data, batch_size=128, n
     return train_loader, val_loader, test_loader
 
 
+def get_input_shape(train_data):
+    example_inputs = train_data[0][0]
+    if isinstance(example_inputs, (list, tuple)):
+        return example_inputs[0].shape
+    return example_inputs.shape
+
+
 def print_loaded_dataset_shapes(build_datasets_fn):
     def wrapper(*args, **kwargs):
         train_data, val_data, test_data, info = build_datasets_fn(*args, **kwargs)
@@ -48,8 +55,7 @@ def print_loaded_dataset_shapes(build_datasets_fn):
             print(f"\tval_samples: {len(val_data)}")
         if test_data is not None:
             print(f"\ttest_samples: {len(test_data)}")
-        example_shape = train_data[0][0].shape
-        print(f"\texample_shape: {example_shape}")
+        print(f"\texample_shape: {get_input_shape(train_data)}")
         return train_data, val_data, test_data, info
     return wrapper
 
