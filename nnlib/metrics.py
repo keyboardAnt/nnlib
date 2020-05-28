@@ -1,7 +1,9 @@
 from abc import ABC, abstractmethod
 from collections import defaultdict
 
+from sklearn.metrics import roc_auc_score
 import numpy as np
+import torch
 
 from . import utils
 
@@ -30,6 +32,8 @@ class Metric(ABC):
 
 
 class Accuracy(Metric):
+    """ Accuracy metric. Works in both binary and multiclass classification settings.
+    """
     def __init__(self, output_key: str = 'pred', **kwargs):
         super(Accuracy, self).__init__(**kwargs)
         self.output_key = output_key
@@ -54,9 +58,52 @@ class Accuracy(Metric):
         tensorboard.add_scalar(f"metrics/{partition}_{self.name}", accuracy, epoch)
 
     def on_iteration_end(self, outputs, batch_labels, partition, **kwargs):
-        pred = utils.to_numpy(outputs[self.output_key]).argmax(axis=1).astype(np.int)
+        out = outputs[self.output_key]
+        if out.shape[-1] > 1:
+            # multiple class
+            pred = utils.to_numpy(out).argmax(axis=1).astype(np.int)
+        else:
+            # binary classification
+            pred = utils.to_numpy(out.squeeze(dim=-1) > 0.5).astype(np.int)
         batch_labels = utils.to_numpy(batch_labels[0]).astype(np.int)
         self._accuracy_storage[partition].append((pred == batch_labels).astype(np.float).mean())
+
+
+class ROCAUC(Metric):
+    """ ROC AUC for binary classification setting.
+    """
+    def __init__(self, output_key: str = 'pred', **kwargs):
+        super(ROCAUC, self).__init__(**kwargs)
+        self.output_key = output_key
+
+        # initialize and use later
+        self._score_storage = defaultdict(list)
+        self._label_storage = defaultdict(list)
+        self._auc = defaultdict(dict)
+
+    @property
+    def name(self):
+        return "ROC AUC"
+
+    def value(self, epoch, partition, **kwargs):
+        return self._auc[partition].get(epoch, None)
+
+    def on_epoch_start(self, partition, **kwargs):
+        self._score_storage[partition] = []
+        self._label_storage[partition] = []
+
+    def on_epoch_end(self, partition, tensorboard, epoch, **kwargs):
+        labels = torch.cat(self._label_storage[partition], dim=0)
+        scores = torch.cat(self._score_storage[partition], dim=0)
+        auc = roc_auc_score(y_true=utils.to_numpy(labels), y_score=utils.to_numpy(scores))
+        self._auc[partition][epoch] = auc
+        tensorboard.add_scalar(f"metrics/{partition}_{self.name}", auc, epoch)
+
+    def on_iteration_end(self, outputs, batch_labels, partition, **kwargs):
+        pred = outputs[self.output_key]
+        assert pred.shape[-1] == 1
+        self._score_storage[partition].append(pred.squeeze(dim=-1))
+        self._label_storage[partition].append(batch_labels[0])
 
 
 class TopKAccuracy(Metric):
