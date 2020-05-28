@@ -154,3 +154,21 @@ def capture_arguments_of_init(init_fn):
         self.args = argument_dict
 
     return wrapper
+
+
+def atoi(text):
+    if text.isdigit():
+        return int(text)
+    else:
+        return text
+
+
+def natural_keys(text):
+    return [atoi(c) for c in re.split(r'(\d+)', text)]
+
+
+def get_first_k_states(model_dir, k=8):
+    saved_models = os.listdir(os.path.join(model_dir, 'checkpoints'))
+    saved_models = filter(lambda x: x.find("epoch") != -1, saved_models)
+    saved_models = sorted(saved_models, key=natural_keys)
+    return saved_models[:k]
