@@ -39,16 +39,30 @@ def build_optimizer(named_params, optimization_args):
     name = args.pop('name', 'adam')
     if name == 'adam':
         optimizer = optim.Adam(params, **args)
-    if name == 'sgd':
+    elif name == 'sgd':
         optimizer = optim.SGD(params, **args)
+    else:
+        raise ValueError(f"Optimizer with name '{name}' is not supported")
     return optimizer
 
 
 def build_scheduler(optimizer, optimization_args):
     args = optimization_args.get('scheduler', {})
-    step_size = args.get('step_size', 1)
-    gamma = args.get('gamma', 1.0)
-    return optim.lr_scheduler.StepLR(optimizer, step_size=step_size, gamma=gamma)
+    name = args.get('name', 'StepLR')
+    scheduler = None
+    if name == 'StepLR':
+        step_size = args.get('step_size', 1)
+        gamma = args.get('gamma', 1.0)
+        print(f"Using StepLR scheduler with step_size={step_size} and gamma={gamma}")
+        scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=step_size, gamma=gamma)
+    elif name == 'MultiStepLR':
+        milestones = args.get('milestones', [])
+        gamma = args.get('gamma', 1.0)
+        print(f"Using MultiStepLR scheduler with milestones={milestones} and gamma={gamma}")
+        scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=milestones, gamma=gamma)
+    else:
+        raise ValueError(f"Scheduler with name '{name}' is not supported")
+    return scheduler
 
 
 def run_partition(model, epoch, tensorboard, optimizer, loader, partition, training, metrics,
