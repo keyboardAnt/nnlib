@@ -2,6 +2,7 @@ from collections import defaultdict
 import os
 import pickle
 import time
+import copy
 
 from torch.utils.tensorboard import SummaryWriter
 from torch import optim
@@ -26,6 +27,7 @@ def add_weight_decay(named_params, weight_decay_rate):
 
 
 def build_optimizer(named_params, optimization_args):
+    optimization_args = copy.deepcopy(optimization_args)  # as we are modifying it below
     args = optimization_args['optimizer']
 
     # add weight decay if needed
