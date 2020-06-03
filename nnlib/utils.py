@@ -6,6 +6,7 @@ import inspect
 from torch.utils.data import Subset, DataLoader
 from tqdm import tqdm
 import torch
+import numpy as np
 
 
 def make_path(path):
@@ -14,6 +15,8 @@ def make_path(path):
 
 
 def to_numpy(x):
+    if isinstance(x, np.ndarray):
+        return x
     if x.requires_grad:
         x = x.detach()
     if x.device.type != 'cpu':
@@ -23,10 +26,8 @@ def to_numpy(x):
 
 def to_tensor(x, device='cpu', dtype=torch.float):
     if isinstance(x, torch.Tensor):
-        x = x.to(device)
-    else:
-        x = torch.tensor(x, dtype=dtype, device=device)
-    return x
+        return x.to(device)
+    return torch.tensor(x, dtype=dtype, device=device)
 
 
 def to_cpu(x):
