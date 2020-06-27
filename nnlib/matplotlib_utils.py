@@ -14,5 +14,7 @@ def set_default_configs(plt, seaborn=None):
     plt.rcParams['legend.fontsize'] = 12
     plt.rcParams['grid.linewidth'] = 0.5
     plt.rcParams['grid.alpha'] = 0.25
+    # Make sure no Type 3 fonts are used. Such fonts are not accepted by some conferences/journals.
+    matplotlib.rcParams['pdf.fonttype'] = 42
     if seaborn is not None:
         seaborn.set_style("whitegrid")
