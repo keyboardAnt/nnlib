@@ -242,6 +242,15 @@ class DataSelector:
         else:
             return data_builder.build_datasets(**args)
 
+    @register_parser(_parsers, 'celeba')
+    def _parse_birds(self, args, build_loaders=True):
+        from .celeba import CelebA
+        data_builder = CelebA(**args)
+        if build_loaders:
+            return data_builder.build_loaders(**args)
+        else:
+            return data_builder.build_datasets(**args)
+
     def can_parse(self, dataset_name):
         return dataset_name in self._parsers
 
