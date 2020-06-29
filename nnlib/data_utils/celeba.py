@@ -29,13 +29,16 @@ class CelebA(StandardVisionDataset):
         if not self.data_augmentation:
             return self.test_transforms
         return transforms.Compose([transforms.RandomHorizontalFlip(),
-                                   transforms.RandomCrop(32, 4),
+                                   transforms.CenterCrop(178),
+                                   transforms.Resize(224),
                                    transforms.ToTensor(),
                                    self.normalize_transform])
 
     @property
     def test_transforms(self):
         return transforms.Compose([
+            transforms.CenterCrop(178),
+            transforms.Resize(224),
             transforms.ToTensor(),
             self.normalize_transform
         ])
