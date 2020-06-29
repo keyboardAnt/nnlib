@@ -142,7 +142,8 @@ def parse_network_from_config(args, input_shape):
                 norm_layer = group_norm_partial_apply_fn(num_groups=32)
             if args.get('norm_layer', '') == 'none':
                 norm_layer = (lambda num_channels: Identity())
-            net = resnet34(norm_layer=norm_layer)
+            num_classes = args.get('num_classes', 1000)
+            net = resnet34(norm_layer=norm_layer, num_classes=num_classes)
             output_shape = infer_shape([net], input_shape)
             print("output.shape:", output_shape)
             return net, output_shape
