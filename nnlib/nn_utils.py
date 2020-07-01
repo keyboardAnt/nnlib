@@ -3,6 +3,9 @@ from torch import nn
 import torch
 import numpy as np
 
+from .networks.conditional_distributions import ConditionalGaussian, ConditionalUniform, \
+    ConditionalDiracDelta
+
 
 def infer_shape(layers, input_shape, key=None):
     """Given a list of layers representing a sequential model and its input_shape, infers the output shape."""
@@ -124,6 +127,33 @@ def parse_feed_forward(args, input_shape):
             net.append(torch.nn.UpsamplingNearest2d(
                 scale_factor=cur_layer['scale_factor']
             ))
+
+        if layer_type == 'gaussian':
+            # this has to be the last layer
+            net = nn.Sequential(*net)
+            output_shape = infer_shape(net, input_shape)
+            mu = nn.Sequential(nn.Linear(output_shape[1], cur_layer['dim']))
+            logvar = nn.Sequential(nn.Linear(output_shape[1], cur_layer['dim']))
+            output_shape = [None, cur_layer['dim']]
+            print("output.shape:", output_shape)
+            return ConditionalGaussian(net, mu, logvar), output_shape
+
+        if layer_type == 'uniform':
+            # this has to be the last layer
+            net = nn.Sequential(*net)
+            output_shape = infer_shape(net, input_shape)
+            center = nn.Sequential(nn.Linear(output_shape[1], cur_layer['dim']))
+            radius = nn.Sequential(nn.Linear(output_shape[1], cur_layer['dim']))
+            output_shape = [None, cur_layer['dim']]
+            print("output.shape:", output_shape)
+            return ConditionalUniform(net, center, radius), output_shape
+
+        if layer_type == 'dirac':
+            # this has to be the last layer
+            net = nn.Sequential(*net)
+            output_shape = infer_shape(net, input_shape)
+            print("output.shape:", output_shape)
+            return ConditionalDiracDelta(net), output_shape
 
     output_shape = infer_shape(net, input_shape)
     print("output.shape:", output_shape)
