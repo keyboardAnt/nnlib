@@ -46,6 +46,13 @@ def zero_grad(model):
         param.grad = torch.zeros_like(param)
 
 
+def get_num_parameters(model):
+    n_params = 0
+    for p in model.parameters():
+        n_params += p.nelement()
+    return n_params
+
+
 def save(model, path, optimizer=None, scheduler=None):
     print('Saving the model into {}'.format(path))
     make_path(os.path.dirname(path))
