@@ -9,12 +9,10 @@ import os
 from sklearn.manifold import TSNE
 import numpy as np
 import torch
-import matplotlib
-matplotlib.use('agg', warn=False)
-from matplotlib import pyplot
 
 from . import utils
 from .data_utils.base import revert_normalization
+from .matplotlib_utils import import_matplotlib
 
 
 def get_image(x):
@@ -36,7 +34,7 @@ def reconstruction_plot(model, train_data, val_data, n_samples=5, plt=None):
     """Plots reconstruction examples for training & validation sets."""
     model.eval()
     if plt is None:
-        plt = pyplot
+        _, plt = import_matplotlib(agg=True, use_style=False)
     train_samples = [train_data[i][0] for i in range(n_samples)]
     val_samples = [val_data[i][0] for i in range(n_samples)]
     samples = torch.stack(train_samples + val_samples, dim=0)
@@ -58,7 +56,7 @@ def manifold_plot(model, example_shape, low=-1.0, high=+1.0, n_points=20, d1=0, 
     """Plots reconstruction for varying dimensions d1 and d2, while the remaining dimensions are kept fixed."""
     model.eval()
     if plt is None:
-        plt = pyplot
+        _, plt = import_matplotlib(agg=True, use_style=False)
     image = np.zeros((example_shape[0], n_points * example_shape[1], n_points * example_shape[2]), dtype=np.float32)
 
     z = np.random.uniform(low=low, high=high, size=(model.hidden_shape[-1],))
@@ -92,7 +90,7 @@ def latent_scatter(model, data_loader, d1=0, d2=1, plt=None):
     """A scatter plot of latent factors on some 2-d subspace, with points colored according to test labels."""
     model.eval()
     if plt is None:
-        plt = matplotlib.pyplot
+        _, plt = import_matplotlib(agg=True, use_style=False)
     tab = ['tab:blue', 'tab:orange', 'tab:green', 'tab:red', 'tab:purple',
            'tab:brown', 'tab:pink', 'tab:gray', 'tab:olive', 'tab:cyan']
     z = []
@@ -140,7 +138,7 @@ def latent_space_tsne(model, data_loader, plt=None):
     """A scatter plot of latent factors on some 2-d subspace, with points colored according to test labels."""
     model.eval()
     if plt is None:
-        plt = matplotlib.pyplot
+        _, plt = import_matplotlib(agg=True, use_style=False)
     tab = ['tab:blue', 'tab:orange', 'tab:green', 'tab:red', 'tab:purple',
            'tab:brown', 'tab:pink', 'tab:gray', 'tab:olive', 'tab:cyan']
     z = []
@@ -187,7 +185,7 @@ def latent_space_tsne(model, data_loader, plt=None):
 
 def plot_predictions(model, data_loader, key, plt=None, n_examples=10):
     if plt is None:
-        plt = matplotlib.pyplot
+        _, plt = import_matplotlib(agg=True, use_style=False)
     model.eval()
 
     pred = utils.apply_on_dataset(model=model, dataset=data_loader.dataset,
@@ -221,7 +219,7 @@ def plot_images(images, n_rows=None, n_cols=None, titles=None, one_image_size=No
                            above to convert to this format.
     """
     if plt is None:
-        plt = pyplot
+        _, plt = import_matplotlib(agg=True, use_style=False)
     n_images = len(images)
 
     # decide number of rows and columns

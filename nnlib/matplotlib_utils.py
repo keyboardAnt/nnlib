@@ -20,11 +20,12 @@ def set_default_configs(plt, seaborn=None):
         seaborn.set_style("whitegrid")
 
 
-def import_matplotlib(agg=True):
+def import_matplotlib(agg=True, use_style=True):
     import matplotlib
     import seaborn
     if agg:
-        matplotlib.use('agg')
+        matplotlib.use('agg', warn=False)
     from matplotlib import pyplot
-    set_default_configs(pyplot, seaborn)
+    if use_style:
+        set_default_configs(pyplot, seaborn)
     return matplotlib, pyplot
