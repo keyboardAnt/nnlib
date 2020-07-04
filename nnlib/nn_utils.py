@@ -183,7 +183,14 @@ def parse_network_from_config(args, input_shape):
                 norm_layer = (lambda num_channels: Identity())
 
             num_classes = args.get('num_classes', 1000)
-            net = resnet_fn(norm_layer=norm_layer, num_classes=num_classes)
+            pretrained = args.get('pretrained', False)
+
+            # if pretraining is enabled but number of classes is not 1000 replace the last layer
+            if pretrained and num_classes != 1000:
+                net = resnet_fn(norm_layer=norm_layer, num_classes=1000, pretrained=pretrained)
+                net.fc = nn.Linear(net.fc.in_features, num_classes)
+            else:
+                net = resnet_fn(norm_layer=norm_layer, num_classes=num_classes, pretrained=pretrained)
             output_shape = infer_shape([net], input_shape)
             print("output.shape:", output_shape)
             return net, output_shape
