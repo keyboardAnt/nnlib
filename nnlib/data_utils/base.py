@@ -29,14 +29,22 @@ def revert_normalization(samples, dataset):
             means.unsqueeze(dim=0).unsqueeze(dim=2).unsqueeze(dim=3))
 
 
-def get_loaders_from_datasets(train_data, val_data, test_data, batch_size=128, num_workers=4, drop_last=False,
-                              shuffle_train=True):
+def get_loaders_from_datasets(train_data, val_data=None, test_data=None, batch_size=128,
+                              num_workers=4, drop_last=False, shuffle_train=True):
     train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=shuffle_train,
                               num_workers=num_workers, drop_last=drop_last)
-    val_loader = DataLoader(val_data, batch_size=batch_size, shuffle=False,
-                            num_workers=num_workers, drop_last=drop_last)
-    test_loader = DataLoader(test_data, batch_size=batch_size, shuffle=False,
-                             num_workers=num_workers, drop_last=drop_last)
+    if val_data is not None:
+        val_loader = DataLoader(val_data, batch_size=batch_size, shuffle=False,
+                                num_workers=num_workers, drop_last=drop_last)
+    else:
+        val_loader = None
+
+    if test_data is not None:
+        test_loader = DataLoader(test_data, batch_size=batch_size, shuffle=False,
+                                 num_workers=num_workers, drop_last=drop_last)
+    else:
+        test_loader = None
+
     return train_loader, val_loader, test_loader
 
 
