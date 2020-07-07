@@ -8,6 +8,8 @@ from .base import log_call_parameters
 from .abstract import StandardVisionDataset
 from .noise_tools import get_uniform_error_corruption_fn, get_corruption_function_from_confusion_matrix
 
+cifar10_classes = ['airplane', 'automobile', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']
+
 
 class CIFAR(StandardVisionDataset):
     @log_call_parameters
