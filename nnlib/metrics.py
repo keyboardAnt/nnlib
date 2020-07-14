@@ -69,7 +69,7 @@ class Accuracy(Metric):
         else:
             # binary classification
             pred = utils.to_numpy(out.squeeze(dim=-1) > self.threshold).astype(np.int)
-        batch_labels = utils.to_numpy(batch_labels[0]).astype(np.int)
+        batch_labels = utils.to_numpy(batch_labels[0]).astype(np.int).reshape(pred.shape)
         self._accuracy_storage[partition].append((pred == batch_labels).astype(np.float).mean())
 
 
