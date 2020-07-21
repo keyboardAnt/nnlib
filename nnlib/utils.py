@@ -92,6 +92,16 @@ def load(path, methods, device=None, verbose=False, update_args_dict=None):
     return model
 
 
+def with_no_grad(init_fn):
+    def wrapper(*args, **kwargs):
+        with torch.no_grad():
+            ret = init_fn(*args, **kwargs)
+        return ret
+
+    return wrapper
+
+
+@with_no_grad
 def apply_on_dataset(model, dataset, batch_size=256, cpu=True, description="",
                      output_keys_regexp='.*', max_num_examples=2**30,
                      num_workers=0, **kwargs):
