@@ -30,4 +30,11 @@ class Method(torch.nn.Module):
 
     @property
     def device(self):
-        return next(self.parameters()).device
+        params = list(self.parameters())
+        if len(params) > 0:
+            return params[0].device
+        # This remaining case is for nn.DataParallel. The replicas of it have empty parameter lists
+        for v in self.modules():
+            if isinstance(v, torch.nn.Linear):
+                return v.weight.device
+        raise Exception("Cannot find device")

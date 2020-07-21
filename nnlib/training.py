@@ -91,14 +91,14 @@ def run_partition(model, epoch, tensorboard, optimizer, loader, partition, train
 
         # forward pass
         forward_model = (model if data_parallel_model is None else data_parallel_model)
-        torch.set_grad_enabled(training)  # torch.nn.DataParallel uses this when creating copies of model
-        outputs = forward_model.forward(inputs=batch_data, labels=batch_labels, partition=partition,
-                                        grad_enabled=training, loader=loader, dataset=loader.dataset, epoch=epoch)
+        with torch.set_grad_enabled(training):
+            outputs = forward_model.forward(inputs=batch_data, labels=batch_labels, partition=partition,
+                                            grad_enabled=training, loader=loader, dataset=loader.dataset, epoch=epoch)
 
-        batch_losses, outputs = model.compute_loss(inputs=batch_data, labels=batch_labels, outputs=outputs,
-                                                   grad_enabled=training, loader=loader, dataset=loader.dataset,
-                                                   epoch=epoch, partition=partition)
-        batch_total_loss = sum([loss for name, loss in batch_losses.items()])
+            batch_losses, outputs = model.compute_loss(inputs=batch_data, labels=batch_labels, outputs=outputs,
+                                                       grad_enabled=training, loader=loader, dataset=loader.dataset,
+                                                       epoch=epoch, partition=partition)
+            batch_total_loss = sum([loss for name, loss in batch_losses.items()])
 
         if training:
             # backward pass
