@@ -2,6 +2,7 @@ from collections import defaultdict
 import os
 import re
 import inspect
+import copy
 
 from torch.utils.data import Subset, DataLoader
 from tqdm import tqdm
@@ -190,3 +191,21 @@ def get_first_k_states(model_dir, k=8):
     saved_models = filter(lambda x: x.find("epoch") != -1, saved_models)
     saved_models = sorted(saved_models, key=natural_keys)
     return saved_models[:k]
+
+
+class SetTemporaryParams(object):
+    def __init__(self, model, params):
+        self.model = model
+        self.params = params
+        self.original_params = copy.deepcopy(dict(model.named_parameters()))
+
+    def __enter__(self):
+        with torch.no_grad():
+            for k, v in self.model.named_parameters():
+                v.data = self.params[k].data
+        return self.model
+
+    def __exit__(self, type, value, traceback):
+        with torch.no_grad():
+            for k, v in self.model.named_parameters():
+                v.data = self.original_params[k].data
