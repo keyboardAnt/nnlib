@@ -3,6 +3,7 @@ import os
 import re
 import inspect
 import copy
+import time
 
 from torch.utils.data import Subset, DataLoader
 from tqdm import tqdm
@@ -209,3 +210,16 @@ class SetTemporaryParams(object):
         with torch.no_grad():
             for k, v in self.model.named_parameters():
                 v.data = self.original_params[k].data
+
+
+class Timing(object):
+    def __init__(self, description):
+        self.description = description
+
+    def __enter__(self):
+        print(self.description, '...')
+        self._start_time = time.time()
+
+    def __exit__(self, type, value, traceback):
+        end_time = time.time()
+        print(f'[{self.description}] time={end_time - self._start_time:.1f}s')
