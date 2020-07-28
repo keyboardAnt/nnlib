@@ -195,14 +195,21 @@ def parse_network_from_config(args, input_shape):
             print("output.shape:", output_shape)
             return net, output_shape
 
-        if args['net'] == 'resnet34-cifar':
-            from .networks.resnet_cifar import resnet34
+        if args['net'] in ['resnet18-cifar', 'resnet34-cifar']:
+            from .networks.resnet_cifar import resnet18, resnet34
+
+            resnet_fn = None
+            if args['net'] == 'resnet18-cifar':
+                resnet_fn = resnet18
+            if args['net'] == 'resnet34-cifar':
+                resnet_fn = resnet34
+
             norm_layer = torch.nn.BatchNorm2d
             if args.get('norm_layer', '') == 'GroupNorm':
                 norm_layer = group_norm_partial_apply_fn(num_groups=32)
             if args.get('norm_layer', '') == 'none':
                 norm_layer = (lambda num_channels: Identity())
-            net = resnet34(num_classes=args['num_classes'], norm_layer=norm_layer)
+            net = resnet_fn(num_classes=args['num_classes'], norm_layer=norm_layer)
             output_shape = infer_shape([net], input_shape)
             print("output.shape:", output_shape)
             return net, output_shape
