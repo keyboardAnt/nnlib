@@ -30,7 +30,7 @@ def revert_normalization(samples, dataset):
 
 
 def get_loaders_from_datasets(train_data, val_data=None, test_data=None, batch_size=128,
-                              num_workers=4, drop_last=False, shuffle_train=True):
+                              num_workers=4, drop_last=False, shuffle_train=True, **kwargs):
     train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=shuffle_train,
                               num_workers=num_workers, drop_last=drop_last)
     if val_data is not None:
