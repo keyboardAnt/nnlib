@@ -55,6 +55,12 @@ def get_num_parameters(model):
     return n_params
 
 
+def put_always_eval_mode(model):
+    model.eval()
+    model._old_train = model.train
+    model.train = (lambda mode=False: model._old_train(False))
+
+
 def save(model, path, optimizer=None, scheduler=None):
     print('Saving the model into {}'.format(path))
     make_path(os.path.dirname(path))
