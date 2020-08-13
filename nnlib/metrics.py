@@ -73,6 +73,40 @@ class Accuracy(Metric):
         self._accuracy_storage[partition].append((pred == batch_labels).astype(np.float).mean())
 
 
+class MulticlassScalarAccuracy(Metric):
+    """ Accuracy metric in case when the output is a single scalar, while num_classes > 2.
+    """
+    def __init__(self, output_key: str = 'pred', **kwargs):
+        super(MulticlassScalarAccuracy, self).__init__(**kwargs)
+        self.output_key = output_key
+
+        # initialize and use later
+        self._accuracy_storage = defaultdict(list)
+        self._accuracy = defaultdict(dict)
+
+    @property
+    def name(self):
+        return "accuracy"
+
+    def value(self, epoch, partition, **kwargs):
+        return self._accuracy[partition].get(epoch, None)
+
+    def on_epoch_start(self, partition, **kwargs):
+        self._accuracy_storage[partition] = []
+
+    def on_epoch_end(self, partition, tensorboard, epoch, **kwargs):
+        accuracy = np.mean(self._accuracy_storage[partition])
+        self._accuracy[partition][epoch] = accuracy
+        tensorboard.add_scalar(f"metrics/{partition}_{self.name}", accuracy, epoch)
+
+    def on_iteration_end(self, outputs, batch_labels, partition, **kwargs):
+        out = outputs[self.output_key]
+        assert out.shape[-1] == 1
+        pred = utils.to_numpy(torch.round(out)).astype(np.int)
+        batch_labels = utils.to_numpy(batch_labels[0]).astype(np.int).reshape(pred.shape)
+        self._accuracy_storage[partition].append((pred == batch_labels).astype(np.float).mean())
+
+
 class ROCAUC(Metric):
     """ ROC AUC for binary classification setting.
     """
