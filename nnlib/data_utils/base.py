@@ -251,9 +251,27 @@ class DataSelector:
             return data_builder.build_datasets(**args)
 
     @register_parser(_parsers, 'celeba')
-    def _parse_birds(self, args, build_loaders=True):
+    def _parse_celeba(self, args, build_loaders=True):
         from .celeba import CelebA
         data_builder = CelebA(**args)
+        if build_loaders:
+            return data_builder.build_loaders(**args)
+        else:
+            return data_builder.build_datasets(**args)
+
+    @register_parser(_parsers, 'svhn')
+    def _parse_svhn(self, args, build_loaders=True):
+        from .svhn import SVHN
+        data_builder = SVHN(**args)
+        if build_loaders:
+            return data_builder.build_loaders(**args)
+        else:
+            return data_builder.build_datasets(**args)
+
+    @register_parser(_parsers, 'emnist')
+    def _parse_emnist(self, args, build_loaders=True):
+        from .emnist import EMNIST
+        data_builder = EMNIST(**args)
         if build_loaders:
             return data_builder.build_loaders(**args)
         else:
