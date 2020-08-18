@@ -264,12 +264,15 @@ def plot_images(images, n_rows=None, n_cols=None, titles=None, one_image_size=No
     return fig, ax
 
 
-def plot_examples_from_dataset(data, indices, n_rows=None, n_cols=None, one_image_size=None, savename=None, plt=None):
+def plot_examples_from_dataset(data, indices, n_rows=None, n_cols=None, one_image_size=None, savename=None, plt=None,
+                               is_label_one_hot=False, **kwargs):
     n = len(indices)
     images = []
     titles = []
     for i in range(n):
         x, y = data[indices[i]]
+        if is_label_one_hot:
+            y = torch.argmax(y)
         x = revert_normalization(x, data)[0]
         x = utils.to_numpy(x)
         images.append(get_image(x))
