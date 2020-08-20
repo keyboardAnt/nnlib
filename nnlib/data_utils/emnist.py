@@ -40,4 +40,9 @@ class EMNIST(StandardVisionDataset):
         ])
 
     def raw_dataset(self, data_dir: str, download: bool, train: bool, transform):
-        return datasets.EMNIST(data_dir, split=self.split, download=download, train=train, transform=transform)
+        if self.split == 'letters':
+            target_transform = (lambda x: x - 1)
+        else:
+            target_transform = None
+        return datasets.EMNIST(data_dir, split=self.split, download=download, train=train, transform=transform,
+                               target_transform=target_transform)
