@@ -4,6 +4,9 @@ import os
 import numpy as np
 
 from . import utils
+from .metrics import Metric
+from numbers import Number
+import operator
 
 
 class Callback(ABC):
@@ -88,3 +91,27 @@ class EarlyStoppingWithMetric(Callback):
             self._best_result_epoch = epoch
 
         return epoch - self._best_result_epoch > self.stopping_param
+
+
+class StoppingWithOperatorApplyingOnMetric(Callback):
+    def __init__(
+            self,
+            metric: Metric,
+            metric_target_value: Number,
+            partition: str,
+            operator = operator.eq,
+            **kwargs
+    ):
+        super(StoppingWithOperatorApplyingOnMetric, self).__init__(**kwargs)
+        self.metric = metric
+        self.metric_target_value = metric_target_value
+        self.partition = partition
+        self.operator = operator
+
+    def call(
+            self,
+            epoch,
+            **kwargs
+    ) -> bool:
+        metric_curr_value = self.metric.value(partition=self.partition, epoch=epoch)
+        return self.operator(metric_curr_value, self.metric_target_value)
