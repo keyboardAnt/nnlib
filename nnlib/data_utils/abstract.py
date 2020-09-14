@@ -48,7 +48,7 @@ class StandardVisionDataset(ABC):
 
     @property
     def test_transforms(self):
-        return self.train_transforms()
+        return self.train_transforms
 
     def post_process_datasets(self, train_data, val_data, test_data, info=None):
         """ This can be used to modify the labels or images. """
