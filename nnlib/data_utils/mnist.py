@@ -33,19 +33,13 @@ class MNIST(StandardVisionDataset):
         return torch.tensor([0.224])
 
     @property
-    def train_transforms(
-            self,
-            data_normalizing: bool = True
-    ):
-        if self.data_augmentation:
-            return transforms.Compose(
-                [
-                    transforms.RandomCrop(28, 4),
-                    transforms.ToTensor(),
-                    self.normalize_transform
-                ]
-            )
-        return super().train_transforms(data_normalizing)
+    def train_transforms(self):
+        sequential_transforms = [
+            transforms.ToTensor(),
+            # TODO: understand if normaliztion is necessary
+            # self.normalize_transform
+        ]
+        return transforms.Compose(sequential_transforms)
 
     def raw_dataset(self, data_dir: str, download: bool, train: bool, transform):
         return datasets.MNIST(data_dir, download=download, train=train, transform=transform)

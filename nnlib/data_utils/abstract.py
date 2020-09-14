@@ -39,13 +39,11 @@ class StandardVisionDataset(ABC):
         return transforms.Normalize(mean=self.means, std=self.stds)
 
     @property
-    def train_transforms(
-            self,
-            data_normalizing: bool = True
-    ):
-        sequential_transforms = [transforms.ToTensor()]
-        if data_normalizing:
-            sequential_transforms.append(self.normalize_transform)
+    def train_transforms(self):
+        sequential_transforms = [
+            transforms.ToTensor(),
+            self.normalize_transform
+        ]
         return transforms.Compose(sequential_transforms)
 
     @property
