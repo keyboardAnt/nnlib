@@ -2,15 +2,22 @@ from abc import abstractmethod
 
 from torchvision import transforms, datasets
 import torch
+# import torch.nn.functional as F
 
 from .base import log_call_parameters
 from .abstract import StandardVisionDataset
 from .noise_tools import get_uniform_error_corruption_fn
 
+# import functools
+
 
 class MNIST(StandardVisionDataset):
     @log_call_parameters
-    def __init__(self, data_augmentation: bool = False, **kwargs):
+    def __init__(
+            self,
+            data_augmentation: bool = False,
+            **kwargs
+    ):
         super(MNIST, self).__init__(**kwargs)
         self.data_augmentation = data_augmentation
 
@@ -42,7 +49,12 @@ class MNIST(StandardVisionDataset):
         ])
 
     def raw_dataset(self, data_dir: str, download: bool, train: bool, transform):
+        # partial_one_hot = functools.partial(
+        #     F.one_hot,
+        #     num_classes=10
+        # )
         return datasets.MNIST(data_dir, download=download, train=train, transform=transform)
+                              # target_transform=partial_one_hot)
 
 
 class NoisyMNIST(MNIST):

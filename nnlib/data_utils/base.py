@@ -4,6 +4,9 @@ import inspect
 from torch.utils.data import DataLoader
 import numpy as np
 
+import torch.nn.functional as F
+import functools
+
 
 def get_split_indices(n_samples, val_ratio, seed):
     np.random.seed(seed)
@@ -136,6 +139,13 @@ class DataSelector:
     @register_parser(_parsers, 'uniform-noise-mnist')
     def _parse_uniform_noise_mnist(self, args, build_loaders=True):
         from .mnist import UniformNoiseMNIST
+        args['n_classes'] = 10
+        if args['is_one_hot']:
+            partial_one_hot = functools.partial(
+                F.one_hot,
+                num_classes=10
+            )
+            args['target_transform'] = partial_one_hot
         data_builder = UniformNoiseMNIST(**args)
         if build_loaders:
             return data_builder.build_loaders(**args)
