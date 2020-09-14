@@ -108,10 +108,6 @@ class StoppingWithOperatorApplyingOnMetric(Callback):
         self.partition = partition
         self.operator = operator
 
-    def call(
-            self,
-            epoch,
-            **kwargs
-    ) -> bool:
+    def call(self, epoch, **kwargs) -> bool:
         metric_curr_value = self.metric.value(partition=self.partition, epoch=epoch)
         return self.operator(metric_curr_value, self.metric_target_value)
