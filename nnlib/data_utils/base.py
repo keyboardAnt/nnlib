@@ -277,6 +277,15 @@ class DataSelector:
         else:
             return data_builder.build_datasets(**args)
 
+    @register_parser(_parsers, 'cats-and-dogs')
+    def _parse_cats_and_dogs(self, args, build_loaders=True):
+        from .cats_and_dogs import CatsAndDogs
+        data_builder = CatsAndDogs(**args)
+        if build_loaders:
+            return data_builder.build_loaders(**args)
+        else:
+            return data_builder.build_datasets(**args)
+
     def can_parse(self, dataset_name):
         return dataset_name in self._parsers
 
