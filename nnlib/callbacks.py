@@ -4,6 +4,9 @@ import os
 import numpy as np
 
 from . import utils
+from .metrics import Metric
+from numbers import Number
+import operator
 
 
 class Callback(ABC):
@@ -88,6 +91,7 @@ class EarlyStoppingWithMetric(Callback):
             self._best_result_epoch = epoch
 
         return epoch - self._best_result_epoch > self.stopping_param
+
 
 class StoppingWithOperatorApplyingOnMetric(Callback):
     def __init__(
