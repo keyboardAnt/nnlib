@@ -10,8 +10,14 @@ from .noise_tools import get_uniform_error_corruption_fn
 
 class MNIST(StandardVisionDataset):
     @log_call_parameters
-    def __init__(self, data_augmentation: bool = False, **kwargs):
+    def __init__(
+            self,
+            data_normalizing: bool = False,
+            data_augmentation: bool = False,
+            **kwargs
+    ):
         super(MNIST, self).__init__(**kwargs)
+        self.data_normalizing = data_normalizing
         self.data_augmentation = data_augmentation
 
     @property
@@ -27,19 +33,19 @@ class MNIST(StandardVisionDataset):
         return torch.tensor([0.224])
 
     @property
-    def train_transforms(self):
-        if not self.data_augmentation:
-            return self.test_transforms
-        return transforms.Compose([transforms.RandomCrop(28, 4),
-                                   transforms.ToTensor(),
-                                   self.normalize_transform])
-
-    @property
-    def test_transforms(self):
-        return transforms.Compose([
-            transforms.ToTensor(),
-            self.normalize_transform
-        ])
+    def train_transforms(
+            self,
+            data_normalizing: bool = True
+    ):
+        if self.data_augmentation:
+            return transforms.Compose(
+                [
+                    transforms.RandomCrop(28, 4),
+                    transforms.ToTensor(),
+                    self.normalize_transform
+                ]
+            )
+        return super().train_transforms(data_normalizing)
 
     def raw_dataset(self, data_dir: str, download: bool, train: bool, transform):
         return datasets.MNIST(data_dir, download=download, train=train, transform=transform)
