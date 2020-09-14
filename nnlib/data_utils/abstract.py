@@ -40,15 +40,14 @@ class StandardVisionDataset(ABC):
 
     @property
     def train_transforms(self):
-        sequential_transforms = [
+        return transforms.Compose([
             transforms.ToTensor(),
             self.normalize_transform
-        ]
-        return transforms.Compose(sequential_transforms)
+        ])
 
     @property
     def test_transforms(self):
-        return self.train_transforms
+        return self.train_transforms()
 
     def post_process_datasets(self, train_data, val_data, test_data, info=None):
         """ This can be used to modify the labels or images. """
