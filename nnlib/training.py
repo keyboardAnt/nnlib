@@ -62,6 +62,8 @@ def build_scheduler(optimizer, optimization_args):
         gamma = args.get('gamma', 1.0)
         print(f"Using MultiStepLR scheduler with milestones={milestones} and gamma={gamma}")
         scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=milestones, gamma=gamma)
+    elif name == 'dont_use':
+        print('Not using any scheduler')
     else:
         raise ValueError(f"Scheduler with name '{name}' is not supported")
     return scheduler
@@ -186,6 +188,7 @@ def train(model, train_loader, val_loader, epochs, save_iter=10, vis_iter=4,
 
     optimizer = build_optimizer(model.named_parameters(), optimization_args)
     scheduler = build_scheduler(optimizer, optimization_args)
+    print(optimizer)
 
     # convert metrics to list
     if metrics is None:
@@ -247,7 +250,8 @@ def train(model, train_loader, val_loader, epochs, save_iter=10, vis_iter=4,
             break
 
         # update the learning rate
-        scheduler.step()
+        if scheduler is not None:
+            scheduler.step()
 
     # enable testing mode
     model.eval()
