@@ -184,3 +184,58 @@ class TopKAccuracy(Metric):
         topk_correctness = (np.sum(topk_predictions == batch_labels, axis=1) >= 1)
 
         self._accuracy_storage[partition].append(topk_correctness.astype(np.float).mean())
+
+
+class SumOfWrongPredictions(Metric):
+    """
+    Counts the number of wrong predictions (of the given partition, and given epoch).
+    """
+    def __init__(self, output_key: str = 'pred', threshold=0.5, one_hot=False, **kwargs):
+        """
+        :param threshold: in the case of binary classification what threshold to use
+        :param one_hot: whether the labels is in one-hot encoding
+        """
+        super().__init__(**kwargs)
+        self.output_key = output_key
+        self.threshold = threshold
+        self.one_hot = one_hot
+
+        # initialize and use later
+        self._curr_epoch_history_of_every_iteration = defaultdict(list)
+        self._epochs_history = defaultdict(dict)
+
+    @property
+    def name(self):
+        return 'sum_of_wrong_predictions'
+
+    def value(self, epoch, partition, **kwargs):
+        return self._epochs_history[partition].get(epoch, None)
+
+    def on_epoch_start(self, partition, **kwargs):
+        self._curr_epoch_history_of_every_iteration[partition] = []
+
+    def on_epoch_end(self, partition, tensorboard, epoch, **kwargs):
+        curr_epoch_sum_of_wrong_predictions = np.sum(self._curr_epoch_history_of_every_iteration[partition])
+        self._epochs_history[partition][epoch] = curr_epoch_sum_of_wrong_predictions
+        tensorboard.add_scalar(f"metrics/{partition}_{self.name}", curr_epoch_sum_of_wrong_predictions, epoch)
+
+    def on_iteration_end(self, outputs, batch_labels, partition, **kwargs):
+        """
+        Summing the total number of wrong predictions in the current iteration. Store the result.
+        """
+        # calculate the sum
+        out = outputs[self.output_key]
+        if out.shape[-1] > 1:
+            # multiple class
+            pred = utils.to_numpy(out).argmax(axis=1).astype(np.int)
+        else:
+            # binary classification
+            pred = utils.to_numpy(out.squeeze(dim=-1) > self.threshold).astype(np.int)
+        batch_labels = utils.to_numpy(batch_labels[0]).astype(np.int)
+        if self.one_hot:
+            batch_labels = np.argmax(batch_labels, axis=1)
+        else:
+            batch_labels = batch_labels.reshape(pred.shape)
+        curr_iteration_sum_of_wrong_predictions = (pred != batch_labels).astype(np.float).sum()
+        # store
+        self._curr_epoch_history_of_every_iteration[partition].append(curr_iteration_sum_of_wrong_predictions)
