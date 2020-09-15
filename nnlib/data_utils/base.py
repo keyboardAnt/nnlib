@@ -131,11 +131,6 @@ class DataSelector:
     @register_parser(_parsers, 'mnist')
     def _parse_mnist(self, args, build_loaders=True):
         from .mnist import MNIST
-        # if args['is_one_hot']:
-            # def mnist_one_hot_encoder(class_label: int) -> torch.Tensor:
-            #     partial_one_hot = functools.partial(F.one_hot, num_classes=10)
-            #     return partial_one_hot(torch.tensor(class_label))
-            # args['target_transform'] = mnist_one_hot_encoder
         data_builder = MNIST(**args)
         if build_loaders:
             return data_builder.build_loaders(**args)
