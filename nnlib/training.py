@@ -138,6 +138,8 @@ def run_partition(model, epoch, tensorboard, optimizer, loader, partition, train
                            loader=loader)
     for metric in metrics:
         metric.on_epoch_end(epoch=epoch, tensorboard=tensorboard, partition=partition)
+        log_msg = f'metric/{partition}/{metric.name}: {metric.value(epoch=epoch, partition=partition)}'
+        print(log_msg)
 
     return losses
 
