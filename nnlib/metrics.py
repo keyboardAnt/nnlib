@@ -218,6 +218,7 @@ class SumOfWrongPredictions(Metric):
         curr_epoch_sum_of_wrong_predictions = np.sum(self._curr_epoch_history_of_every_iteration[partition])
         self._epochs_history[partition][epoch] = curr_epoch_sum_of_wrong_predictions
         tensorboard.add_scalar(f"metrics/{partition}_{self.name}", curr_epoch_sum_of_wrong_predictions, epoch)
+        print(f"metrics/{partition}_{self.name}: {curr_epoch_sum_of_wrong_predictions}")
 
     def on_iteration_end(self, outputs, batch_labels, partition, **kwargs):
         """

@@ -4,6 +4,7 @@ import inspect
 from torch.utils.data import DataLoader
 import numpy as np
 
+import torch
 import torch.nn.functional as F
 import functools
 
@@ -130,6 +131,11 @@ class DataSelector:
     @register_parser(_parsers, 'mnist')
     def _parse_mnist(self, args, build_loaders=True):
         from .mnist import MNIST
+        # if args['is_one_hot']:
+            # def mnist_one_hot_encoder(class_label: int) -> torch.Tensor:
+            #     partial_one_hot = functools.partial(F.one_hot, num_classes=10)
+            #     return partial_one_hot(torch.tensor(class_label))
+            # args['target_transform'] = mnist_one_hot_encoder
         data_builder = MNIST(**args)
         if build_loaders:
             return data_builder.build_loaders(**args)
@@ -139,13 +145,6 @@ class DataSelector:
     @register_parser(_parsers, 'uniform-noise-mnist')
     def _parse_uniform_noise_mnist(self, args, build_loaders=True):
         from .mnist import UniformNoiseMNIST
-        args['n_classes'] = 10
-        if args['is_one_hot']:
-            partial_one_hot = functools.partial(
-                F.one_hot,
-                num_classes=10
-            )
-            args['target_transform'] = partial_one_hot
         data_builder = UniformNoiseMNIST(**args)
         if build_loaders:
             return data_builder.build_loaders(**args)
@@ -312,3 +311,8 @@ class DataSelector:
 
 def load_data_from_arguments(args, build_loaders=True):
     return DataSelector().parse(args, build_loaders=build_loaders)
+
+
+# def mnist_one_hot_encoder(class_label: int, num_classes: int = 10) -> torch.Tensor:
+#     partial_one_hot = functools.partial(F.one_hot, num_classes=num_classes)
+#     return partial_one_hot(torch.tensor(class_label))
